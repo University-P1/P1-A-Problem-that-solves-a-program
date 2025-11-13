@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 4.0.2)
 project(wildire-spotting C)
 
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(wildfire-spotting
     src/main.c
@@ -10,6 +10,11 @@ add_executable(wildfire-spotting
     src/display.c
     src/input.c
     src/burnout_cell.c
+)
+
+set_target_properties(wildfire-spotting PROPERTIES
+    C_STANDARD 23
+    C_EXTENSIONS OFF
 )
 
 install(TARGETS wildfire-spotting DESTINATION bin)
