@@ -21,6 +21,8 @@ typedef struct CellArray {
 } CellArray;
 
 typedef struct CellularAutomaton {
-    CellArray cells;
+    CellArray* rows;
+    size_t num_rows;
     /* other stuff maybe */
 } CellularAutomaton;
+
