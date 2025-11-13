@@ -23,6 +23,8 @@ typedef struct CellArray {
 typedef struct CellularAutomaton {
     CellArray* rows;
     size_t num_rows;
+    float windX;
+    float windY;
     /* other stuff maybe */
 } CellularAutomaton;
 
