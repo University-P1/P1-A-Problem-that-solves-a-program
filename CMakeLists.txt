@@ -17,4 +17,13 @@ set_target_properties(wildfire-spotting PROPERTIES
     C_EXTENSIONS OFF
 )
 
+target_compile_options(wildfire-spotting PRIVATE 
+    # Enable all warnings
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wnarrowing # useful for overflow errors
+    -Wconversion
+)
+
 install(TARGETS wildfire-spotting DESTINATION bin)
