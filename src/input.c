@@ -11,26 +11,32 @@ char* findChar(char c);
 /// Parse an integer, this function looks a max of 11 bytes ahead
 /// The maximum integer number is 10 digits, and a possible negation sign also takes 1 digit.
 /// @return Returns the number of bytes read
-uint8_t parseNumber(const char* buf, size_t max_len, int* out) {
+static uint8_t parseNumber(const char* buf, size_t max_len, int* out) {
     // Local buffer to store the number in
-    char num_str[12];
+    char num_str[11];
 
     // Our pointer that looks forward through the `buf` for number characters
     const char* ptr = buf;
+    const bool negative = *ptr == '-';
+    if (negative) ptr++;
+
     for (; ptr < buf + max_len && isdigit(*ptr); ptr++) {
+        // `negative` is 1 if true, and 0 if false, we subtract this to not load the '-' char into the buffer
+        const uint8_t i = (uint8_t)(ptr - buf) - negative;
+
         // If we have looked further than the size of our `num_str` then we exit the loop
-        const uint8_t i = ptr - buf;
         if (i >= sizeof(num_str)) break;
 
         num_str[i] = *ptr;
     }
     // A number has been loaded succesfully into the num_str. Now we "null terminate" the string
     // We do this by adding a 0 at the end of the string:
-    const uint8_t i = ptr - buf;
+    const uint8_t i = (uint8_t)(ptr - buf);
     num_str[i] = '\0';
 
     // Now we use `atoi` to convert it to an integer:
     *out = atoi(num_str);
+    if (negative) *out = -*out;
     return i; // i = number of bytes parsed to an integer
 }
 
@@ -50,7 +56,7 @@ CellularAutomaton readInitialState(const char* path) {
 
     FILE* fd = fopen(path, "r");
     if (fd == nullptr){
-        printf("Failed to open file: %s\n", path);
+        fprintf(stderr, "Failed to open file: %s\n", path);
         goto _err;
     } 
 
@@ -70,7 +76,7 @@ CellularAutomaton readInitialState(const char* path) {
         uint8_t unused_bytes = buf_size - buf_pos;
         memcpy(buf, buf + buf_pos, unused_bytes);
 
-        size_t num_bytes = fread(buf + unused_bytes, 1, sizeof(buf) - unused_bytes, fd);
+        uint8_t num_bytes = (uint8_t)fread(buf + unused_bytes, 1, sizeof(buf) - unused_bytes, fd);
         if (num_bytes == 0) continue;
 
         // The bytes we copied and the bytes we read
@@ -89,7 +95,13 @@ parse_next:
                 uint8_t bytes_parsed = parseNumber(buf + buf_pos, bytes_left, header_addresses[header_index]);
 
                 if (bytes_parsed == 0) {
-                    printf("ERROR: failed parsing number");
+                    fprintf(stderr, "ERROR: failed parsing number\n");
+                    goto _err;
+                }
+
+                // Max bytes parsed
+                if (bytes_parsed == 11 && buf[buf_pos + bytes_parsed] != ',') {
+                    fprintf(stderr, "ERROR: number too long, max 11 digits. Please avoid leading zeros if possible\nError at header number: %d\n", header_index);
                     goto _err;
                 }
 
@@ -97,7 +109,7 @@ parse_next:
                 if (buf_pos + bytes_parsed >= buf_size) {
                     // We have reached the end of the file without completing the headers, this is an invalid file
                     if (feof(fd)) {
-                        printf("ERROR: end of input file reached before parsing headers was complete\nStopped at header number: %d", header_index);
+                        fprintf(stderr, "ERROR: end of input file reached before parsing headers was complete\nError at header number: %d\n", header_index);
                         goto _err;
                     }
 
@@ -114,7 +126,7 @@ parse_next:
                 if (++header_index < sizeof(header_addresses) / sizeof(header_addresses[0])) {
                     // Since there are more headers, we need a ',' to seperate the values
                     if (buf[buf_pos] != ',') {
-                        printf("ERROR: invalid char while parsing input headers: '%c'\nError at header number: %d", buf[buf_pos], header_index);
+                        fprintf(stderr, "ERROR: invalid char while parsing input headers: '%c'\nError at header number: %d\n", buf[buf_pos], header_index);
                         goto _err;
                     }
 
@@ -134,7 +146,7 @@ parse_next:
                 // No more headers, require newline at the end of header section:
                 char header_end = buf[buf_pos];
                 if (header_end != '\n' && header_end != '\r') {
-                    printf("ERROR: missing newline at the end of header section");
+                    fprintf(stderr, "ERROR: missing newline at the end of header section");
                     goto _err;
                 }
 
@@ -153,10 +165,23 @@ parse_next:
 
                 // Now we don't need to do any more reading from the buffer in this step.
                 // We can safely setup the automaton
-                automaton.num_rows = height;
-                automaton.rows = malloc(sizeof(CellArray*) * height);
+                if (height < 0) {
+                    fprintf(stderr, "ERROR: Header value \"height\" was a negative value\n");
+                    goto _err;
+                }
+                if (width < 0) {
+                    fprintf(stderr, "ERROR: Header value \"width\" was a negative value\n");
+                    goto _err;
+                }
+
+                // Correctly typed versions
+                size_t h = (size_t)height;
+                size_t w = (size_t)width;
+
+                automaton.num_rows = h;
+                automaton.rows = malloc(sizeof(CellArray*) * h);
                 if (!automaton.rows) {
-                    printf("Out Of Memory");
+                    fprintf(stderr, "Out Of Memory");
                     fclose(fd);
                     exit(EXIT_FAILURE);
                 }
@@ -164,21 +189,22 @@ parse_next:
                 automaton.windX = (float)windX / 100.f;
 
                 // Allocate memory for the cells
-                Cell* cells = malloc(sizeof(Cell) * height * width);
+                Cell* cells = malloc(sizeof(Cell) * h * w);
                 if (cells == nullptr) {
-                    printf("Out Of Memory");
+                    fprintf(stderr, "Out Of Memory");
                     fclose(fd);
                     exit(EXIT_FAILURE);
                 }
 
                 // Distribute it among the CellArrays
-                for (size_t i = 0; i < height; i++) {
+                for (size_t i = 0; i < h; i++) {
                     automaton.rows[i] = (CellArray){
-                        .count = width,
-                        .elements = cells + (i * width),
+                        .count = w,
+                        .elements = cells + (i * w),
                     };
                 }
 
+                // Load more bytes if we are out of space
                 state = PARSE_STATE_CELLS;
                 goto parse_next;
 
