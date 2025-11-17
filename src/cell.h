@@ -1,18 +1,28 @@
 #pragma once
-#include <stddef.h>
-#include <inttypes.h>
+#include <stdio.h>
 
 typedef enum CellState {
     CELLSTATE_NORMAL,
     CELLSTATE_ONFIRE,
     CELLSTATE_BURNT,
 } CellState;
+const char* cellStateToStr(CellState state);
+
+
+typedef enum CellType {
+    CELLTYPE_TREE,
+    CELLTYPE_BUSH,
+    CELLTYPE_GRASS,
+    CELLTYPE_UNBURNABLE,
+} CellType;
+const char* cellTypeToStr(CellType type);
 
 typedef struct Cell {
-    float moisture_level;
-    float fuel_amount;
+    float moisture;
+    float fuel;
     float heat;
     CellState state;
+    CellType type;
 } Cell;
 
 typedef struct CellArray {
@@ -28,3 +38,5 @@ typedef struct CellularAutomaton {
     /* other stuff maybe */
 } CellularAutomaton;
 
+
+void printCell(const Cell* cell, FILE* fd);

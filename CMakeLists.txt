@@ -5,6 +5,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(wildfire-spotting
     src/main.c
+    src/cell.c
     src/direct_spread.c
     src/spotting_spread.c
     src/display.c
