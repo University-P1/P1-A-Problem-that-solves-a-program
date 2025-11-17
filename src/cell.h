@@ -24,6 +24,7 @@ typedef struct Cell {
     CellState state;
     CellType type;
 } Cell;
+void printCell(const Cell* cell, FILE* fd);
 
 typedef struct CellArray {
     Cell* elements;
@@ -37,6 +38,7 @@ typedef struct CellularAutomaton {
     float windY;
     /* other stuff maybe */
 } CellularAutomaton;
+void printAutomaton(const CellularAutomaton* automaton, FILE* fd);
 
-
-void printCell(const Cell* cell, FILE* fd);
+typedef void (*cellProc)(const CellularAutomaton* automaton, size_t row, size_t col, void* userdata);
+void forEachCell(const CellularAutomaton* automaton, cellProc fn, void* userdata);
