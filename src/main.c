@@ -16,11 +16,5 @@ int main(int argc, char const* const* argv) {
     printf("Wind speed Y: %f\n", automaton.windY);
 
 
-    for (size_t row = 0; row < automaton.num_rows; row++) {
-        const CellArray arr = automaton.rows[row];
-        for (size_t col = 0; col < arr.count; col++) {
-            const Cell* cell = arr.elements + col;
-            printCell(cell, stderr);
-        }
-    }
+    printAutomaton(&automaton, stderr);
 }
