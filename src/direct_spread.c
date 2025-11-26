@@ -1,6 +1,7 @@
 #include "direct_spread.h"
 
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,7 +19,7 @@ void directSpread(CellularAutomaton* automaton) {
                 continue;
             }
             // We know the cell is on fire
-            // We are looping over neighbouring cells to check if they are gonna catch fire
+            // We are looping over neighbouring cells to check if they are going to catch fire
             spreadToNeighbours(automaton, row, col);
 
         }
@@ -74,6 +75,33 @@ void spreadToNeighbours(CellularAutomaton* automaton, size_t row, size_t col) {
     }
 }
 
-float chanceToSpread(const Cell* src,  const Cell* dst) {
-    return 0.1f;
+float chanceToSpread(const Cell* src, const Cell* dst) {
+
+    // tabal of nominal fire probability from source https://www.mdpi.com/2571-6255/3/3/26
+    float nominals[VEG_LAST][VEG_LAST] = {
+        //   B      S     G     FP     AF   N
+        {.3f, .375f, .25f, .275f, .25f, .25f},      // B
+        {.375f, .375f, .475f, .4f, .3f, .475f},     // S
+        {.45f, .475f, .475f, .475f, .375f, .475f},  // G
+        {.225f, .325f, .25f, .35f, .2f, .35f},      // FP
+        {.25f, .25f, .3f, .475f, .35f, .25f},       // AF
+        {.075f, .1f, .075f, .275f, .075f, .075f},   // N
+    };
+
+    // nominal fire probability
+    float p_n = nominals[src->type][dst->type];
+
+    //moisture level from 1-100 in the cell we are trying to spread to
+    float m_l = dst->moisture_level;
+    // moisture level factor, the higher the moisture level, the more negative it becomes, therefore lower chance
+    // chance of spreading
+    float e_m = expf(-0.014f * m_l);
+
+    // wind and slope factor set to 1 for now
+    float a_wh = 1.0f;
+
+    // algorith from source, spread probability from burning cell to neighbuoring cell
+    float p_burn = (1 - powf(1 - p_n,a_wh)) * e_m;
+
+    return p_burn;
 }

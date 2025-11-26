@@ -17,10 +17,22 @@ typedef enum CellType {
 } CellType;
 const char* cellTypeToStr(CellType type);
 
+typedef enum VegType {
+    VEG_BROADLEAVES,
+    VEG_SHRUBS,
+    VEG_GRASSLAND,
+    VEG_FireProne,
+    VEG_AgroForestry,
+    VEG_NOTFIREPRONE,
+
+    VEG_LAST,
+} VegType;
+
 typedef struct Cell {
     float moisture;
     float fuel;
     float heat;
+    VegType veg_type;
     CellState state;
     CellType type;
 } Cell;
@@ -32,8 +44,8 @@ typedef struct CellArray {
 } CellArray;
 
 typedef struct CellularAutomaton {
-    const CellArray* const rows;
-    const size_t num_rows;
+    CellArray* const rows;
+    size_t num_rows;
     float windX;
     float windY;
     /* other stuff maybe */
