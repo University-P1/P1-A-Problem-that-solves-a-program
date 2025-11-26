@@ -92,7 +92,7 @@ float chanceToSpread(const Cell* src, const Cell* dst) {
     float p_n = nominals[src->type][dst->type];
 
     //moisture level from 1-100 in the cell we are trying to spread to
-    float m_l = dst->moisture_level;
+    float m_l = dst->moisture;
     // moisture level factor, the higher the moisture level, the more negative it becomes, therefore lower chance
     // chance of spreading
     float e_m = expf(-0.014f * m_l);
