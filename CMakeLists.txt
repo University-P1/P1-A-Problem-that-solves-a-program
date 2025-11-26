@@ -25,6 +25,8 @@ target_compile_options(wildfire-spotting PRIVATE
     -Wpedantic
     -Wnarrowing # useful for overflow errors
     -Wconversion
+    -Wdeprecated
+    -Werror
 )
 
 # if(CMAKE_BUILD_TYPE STREQUAL "Debug")
