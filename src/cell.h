@@ -9,13 +9,13 @@ typedef enum CellState {
 const char* cellStateToStr(CellState state);
 
 
-typedef enum CellType {
+/*typedef enum CellType {
     CELLTYPE_TREE,
     CELLTYPE_BUSH,
     CELLTYPE_GRASS,
     CELLTYPE_UNBURNABLE,
 } CellType;
-const char* cellTypeToStr(CellType type);
+const char* cellTypeToStr(CellType type); */
 
 typedef enum VegType {
     VEG_BROADLEAVES,
@@ -32,9 +32,9 @@ typedef struct Cell {
     float moisture;
     float fuel;
     float heat;
-    VegType veg_type;
+    VegType type;
     CellState state;
-    CellType type;
+    //CellType type;
 } Cell;
 void printCell(const Cell* cell, FILE* fd);
 
