@@ -49,7 +49,7 @@ CellularAutomaton readInitialState(const char* path) {
     FILE* fd = fopen(path, "r");
     if (!fd) {
         fprintf(stderr, "Failed to open file: %s\n", path);
-        goto err_close_file;
+        goto err_dont_close;
     } 
 
     // Headers
@@ -62,7 +62,6 @@ CellularAutomaton readInitialState(const char* path) {
 
     // Load the first line, which holds the headers
     char header_line[128];
-    uint8_t idx = 0;
     if(!fgets(header_line, sizeof(header_line), fd))
         goto err_failed_read;
 
@@ -77,7 +76,6 @@ CellularAutomaton readInitialState(const char* path) {
         fputs("Failed reading header values", stderr);
         goto err_close_file;
     }
-    idx += bytes_read;
     
     if (height < 0) {
         fputs("ERROR: Header value \"height\" has a negative value\n", stderr);
@@ -175,19 +173,25 @@ CellularAutomaton readInitialState(const char* path) {
         idx++;
 
         // parse type
-        CellType type;
+        VegType type;
         switch (line[idx]) {
-        case 'T':
-            type = CELLTYPE_TREE;
-            break;
         case 'B':
-            type = CELLTYPE_BUSH;
+            type = VEG_BROADLEAVES;
+            break;
+        case 'S':
+            type = VEG_SHRUBS;
             break;
         case 'G':
-            type = CELLTYPE_GRASS;
+            type = VEG_GRASSLAND;
             break;
-        case 'U':
-            type = CELLTYPE_UNBURNABLE;
+        case 'F':
+            type = VEG_FIREPRONE;
+            break;
+        case 'A':
+            type = VEG_AGROFORESTRY;
+            break;
+        case 'N':
+            type = VEG_NOTFIREPRONE;
             break;
         default: 
             fprintf(stderr, "Invalid cell type at cell number: %zu\n", cell_num);
@@ -261,6 +265,8 @@ err_failed_read:
 
 err_close_file:
     fclose(fd); // Now we will never forget to close the file
+
+err_dont_close:
     return (CellularAutomaton){
         .num_rows = 0,
         .rows = nullptr,

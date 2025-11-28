@@ -1,16 +1,20 @@
 #include "cell.h"
 #include <stdio.h>
 
-const char* cellTypeToStr(CellType type) {
+const char* cellTypeToStr(VegType type) {
     switch (type) {
-    case CELLTYPE_TREE:
-        return "TREE";
-    case CELLTYPE_BUSH:
-        return "BUSH";
-    case CELLTYPE_GRASS:
-        return "GRASS";
-    case CELLTYPE_UNBURNABLE:
-        return "UNBURNABLE";
+    case VEG_BROADLEAVES:
+        return "BROAD LEAVES";
+    case VEG_SHRUBS:
+        return "SHRUBS";
+    case VEG_GRASSLAND:
+        return "GRASSLAND";
+    case VEG_FIREPRONE:
+        return "FIREPRONE";
+    case VEG_AGROFORESTRY:
+        return "AGRO FORESTRY";
+    case VEG_NOTFIREPRONE:
+        return "NOT FIREPRONE";
 
     default:
         fprintf(stderr, "Invalid CellState: %d\n", type);
@@ -23,7 +27,7 @@ const char* cellStateToStr(CellState state) {
     case CELLSTATE_NORMAL:
         return "NORMAL";
     case CELLSTATE_ONFIRE:
-        return "ONFIRE";
+        return "ON FIRE";
     case CELLSTATE_BURNT:
         return "BURNT";
 
