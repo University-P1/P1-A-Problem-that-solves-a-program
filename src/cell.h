@@ -9,24 +9,17 @@ typedef enum CellState {
 const char* cellStateToStr(CellState state);
 
 
-/*typedef enum CellType {
-    CELLTYPE_TREE,
-    CELLTYPE_BUSH,
-    CELLTYPE_GRASS,
-    CELLTYPE_UNBURNABLE,
-} CellType;
-const char* cellTypeToStr(CellType type); */
-
 typedef enum VegType {
     VEG_BROADLEAVES,
     VEG_SHRUBS,
     VEG_GRASSLAND,
-    VEG_FireProne,
-    VEG_AgroForestry,
+    VEG_FIREPRONE,
+    VEG_AGROFORESTRY,
     VEG_NOTFIREPRONE,
 
     VEG_LAST,
 } VegType;
+const char* cellTypeToStr(VegType type);
 
 typedef struct Cell {
     float moisture;

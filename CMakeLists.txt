@@ -27,4 +27,11 @@ target_compile_options(wildfire-spotting PRIVATE
     -Wconversion
 )
 
-install(TARGETS wildfire-spotting DESTINATION bin)
+# if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+#     target_compile_options(wildfire-spotting PRIVATE
+#         -fsanitize=address
+#     )
+# endif()
+
+# Link libm, which is math
+target_link_libraries(wildfire-spotting m)
