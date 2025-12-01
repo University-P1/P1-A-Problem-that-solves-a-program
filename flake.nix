@@ -19,6 +19,10 @@
           cmake
           ninja
           llvmPackages_latest.lld
+          (python3.withPackages (p: [
+            p.customtkinter
+            p.tkinter
+          ]))
         ];
       };
     };
