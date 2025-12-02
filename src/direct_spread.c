@@ -5,11 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void spreadToNeighbours(CellularAutomaton* automaton, size_t row, size_t col);
+void spreadToNeighbours(const CellularAutomaton* automaton, size_t row, size_t col);
 float chanceToSpread(const Cell* src, const Cell* dst);
 
 /// Modifies the Cellular Automaton by spreading the fire between cells
-void directSpread(CellularAutomaton* automaton) {
+void directSpread(const CellularAutomaton* automaton) {
     // we iterate through our grid of cells
     for (size_t row = 0; row < automaton->num_rows; row++ ) {
         CellArray cell_arr = automaton->rows[row];
@@ -27,7 +27,7 @@ void directSpread(CellularAutomaton* automaton) {
     }
 }
 
-void spreadToNeighbours(CellularAutomaton* automaton, size_t row, size_t col) {
+void spreadToNeighbours(const CellularAutomaton* automaton, size_t row, size_t col) {
     // input validation
     assert(row < automaton->num_rows && "out of bounds");
     CellArray cells = automaton->rows[row];

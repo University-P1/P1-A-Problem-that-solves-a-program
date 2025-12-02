@@ -1,5 +1,5 @@
 #include "burnout_cell.h"
 
-void burnoutCells(CellularAutomaton* automaton) {
+void burnoutCells(const CellularAutomaton* automaton) {
 
 }
