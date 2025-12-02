@@ -1,13 +1,32 @@
-from ast import TypeVar
 from enum import Enum
-from typing import Any, Callable, final
+from typing import Callable, TypeVar, final, TYPE_CHECKING
 import customtkinter as tk
+from spinbox import Spinbox
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparisonT
+else:
+    SupportsRichComparisonT = TypeVar("SupportsRichComparisonT")
+
 
 screen_scale = 100
 screen_width = 16 * screen_scale
 screen_height = 9 * screen_scale
 
 shift_held: bool = False
+
+
+class ViewMode(Enum):
+    STATE = 0,
+    TYPE = 1,
+    MOISTURE = 2,
+    FUEL = 3,
+    HEAT = 4,
+    COMBINED = 5,
+
+
+viewmode: ViewMode = ViewMode.STATE
+
 
 def iota(end: int) -> list[int]:
     return list(range(end))
@@ -24,77 +43,176 @@ def on_release_key(event) -> None:
         shift_held = False
 
 
+def clamp(val: SupportsRichComparisonT, min_val: SupportsRichComparisonT, max_val: SupportsRichComparisonT) -> SupportsRichComparisonT:
+    return max(min_val, min(val, max_val))
+
+
+
+class VegType(Enum):
+    BROADLEAVES = 'B',
+    SHRUBS = 'S',
+    GRASSLAND = 'G',
+    FIREPRONE = 'F',
+    AGROFORESTRY = 'A',
+    NOTFIREPRONE = 'N',
+
+
+class CellState(Enum):
+    NORMAL = 'N',
+    ONFIRE = 'F',
+    BURNTOUT = 'O',
+
+
 @final
 class Cell(tk.CTkButton):
-    def __init__(self, cellgrid, x: int, y: int):
-        width = int(cellgrid.width / cellgrid.size[0])
-        height = int(cellgrid.height / cellgrid.size[1])
+    def __init__(self, cellgrid,
+                 x: int,
+                 y: int,
+                 command: Callable[[int, int], None]):
+        width = int(cellgrid.winfo_reqwidth() / cellgrid.size[0])
+        height = int(cellgrid.winfo_reqheight() / cellgrid.size[1])
+
+        min_len = min(width, height)
+
+        self.x = x
+        self.y = y
+        self.command = command
 
         super().__init__(
             cellgrid,
             text="",
             border_width=1,
             border_color="black",
-            width=width,
-            height=height,
-            command=lambda: self.button_callback(x, y)
+            width=min_len,
+            height=min_len,
+            corner_radius=0,
+            command=self.callback
         )
 
-        self.type: VegType = VegType.TYPE1
+        self.type: VegType = VegType.BROADLEAVES
         self.state: CellState = CellState.NORMAL
+        self.moisture: float = 0
+        self.fuel: float = 0
+        self.heat: float = 0
 
-
-    def button_callback(self, x: int, y: int) -> None:
-        self.master.select_button(x, y)
+    def callback(self) -> None:
+        self.command(self.x, self.y)
 
 
     def select(self) -> None:
-        self.configure(border_color="red", border_width=2)
-        self.update()
+        self.configure(border_color="yellow", border_width=2)
+        self.update_cell()
 
     def unselect(self) -> None:
         self.configure(border_color="black", border_width=1)
-        self.update()
+        self.update_cell()
 
 
-    def update(self) -> None:
+    def update_cell(self) -> None:
         col = None
-        match (self.state):
-            case CellState.NORMAL:
-                col = "green"
-            case CellState.ONFIRE:
-                col = "red"
-            case CellState.BURNTOUT:
-                col = "black"
+        moist_hex = "00"
+        fuel_hex = "00"
+        heat_hex = "00"
+        match viewmode:
+            case ViewMode.STATE:
+                match self.state:
+                    case CellState.NORMAL:
+                        col = "green"
+                    case CellState.ONFIRE:
+                        col = "red"
+                    case CellState.BURNTOUT:
+                        col = "black"
+
+            case ViewMode.TYPE:
+                match self.type:
+                    case VegType.BROADLEAVES:
+                        col = "blue"
+
+                    case VegType.SHRUBS:
+                        col = "dark green"
+
+                    case VegType.GRASSLAND:
+                        col = "light green"
+
+                    case VegType.FIREPRONE:
+                        col = "red"
+
+                    case VegType.AGROFORESTRY:
+                        col = "yellow"
+
+                    case VegType.NOTFIREPRONE:
+                        col = "grey"
+
+            case ViewMode.MOISTURE:
+                moist_hex = format(int(self.moisture), "x")
+
+            case ViewMode.FUEL:
+                fuel_hex = format(int(self.fuel), "x")
+
+            case ViewMode.HEAT:
+                heat_hex = format(int(self.heat), "x")
+
+            case ViewMode.COMBINED:
+                moist_hex = format(int(self.moisture), "x")
+                fuel_hex = format(int(self.fuel), "x")
+                heat_hex = format(int(self.heat), "x")
+
+
+        if col is None:
+            fixHex: Callable[[str], str] = lambda h: "0" + h if len(h) <= 1 else h
+
+
+            col = "#{}{}{}".format(fixHex(heat_hex), fixHex(fuel_hex), fixHex(moist_hex))
 
         self.configure(fg_color=col)
+
+    def set_type(self, type: VegType) -> None:
+        self.type = type
+
+    def set_state(self, state: CellState) -> None:
+        self.state = state
+
+    def set_moisture(self, moist: float) -> None:
+        self.moisture = clamp(moist, 0, 255)
+
+    def set_fuel(self, fuel: float) -> None:
+        self.fuel = clamp(fuel, 0, 255)
+
+    def set_heat(self, heat: float) -> None:
+        self.heat = clamp(heat, 0, 255)
 
 
 @final
 class CellGridFrame(tk.CTkFrame):
-    def __init__(self, master: Any, gridsize: tuple[int, int], width: int=int(screen_width * 0.8), height: int=int(screen_height * 0.8)) -> None:  # pyright: ignore[reportExplicitAny, reportAny]
-        super().__init__(master, width, height)  # pyright: ignore[reportUnknownMemberType]
-        self.width: int = width;
-        self.height: int = height;
+    def __init__(self, master,
+                 gridsize: tuple[int, int],
+                 command: Callable[[list[Cell]], None]) -> None:
+        width: int = int(master.winfo_width() * 0.85)
+        height: int = int(master.winfo_height() * 0.85)
+
+        min_len = min(width, height)
+        super().__init__(master, width=min_len, height=min_len)
 
         self.size: tuple[int, int] = gridsize
+        self.command = command
 
-        self.grid_columnconfigure(iota(gridsize[0]), weight=1)  # pyright: ignore[reportUnusedCallResult]
-        self.grid_rowconfigure(iota(gridsize[1]), weight=1)  # pyright: ignore[reportUnusedCallResult]
+        _ = self.grid_columnconfigure(iota(gridsize[0]), weight=1)
+        _ = self.grid_rowconfigure(iota(gridsize[1]), weight=1)
 
         self.cells: list[list[Cell]] = []
-        self.selected: list[tuple[int, int]] = []
+        self.selected: list[Cell] = []
 
+        self.update()
         for row_num in range(gridsize[0]):
             self.cells.append([])
             row = self.cells[row_num]
             for col_num in range(gridsize[1]):
                 row.append(self.make_cell(row_num, col_num))
-                row[col_num].update()
+                row[col_num].update_cell()
 
 
     def make_cell(self, x: int, y: int):
-        cell = Cell(self, x, y)
+        cell = Cell(self, x, y, self.select_button)
         cell.grid(row=x, column=y)
         return cell
 
@@ -107,6 +225,11 @@ class CellGridFrame(tk.CTkFrame):
         else:
             self.select_single(x, y)
 
+        
+        # deduplicate
+        self.selected = list(set(self.selected))
+        self.command(self.selected)
+
 
     def select_single(self, x: int, y: int) -> None:
         self.reset_selected()
@@ -114,53 +237,176 @@ class CellGridFrame(tk.CTkFrame):
         cell = self.cells[x][y]
         cell.select()
 
-        self.selected.append((x, y))
+        self.selected.append(cell)
 
 
     def select_multiple(self, x: int, y: int) -> None:
-        if len(self.selected) == 1:
-            sx = self.selected[0][0]
-            sy = self.selected[0][1]
-
-            minx = min(sx, x)
-            maxx = max(sx, x)
-            miny = min(sy, y)
-            maxy = max(sy, y)
-            for x in range(minx, maxx + 1):
-                for y in range(miny, maxy + 1):
-                    self.cells[x][y].select()
-                    self.selected.append((x, y))
-
-        else:
+        if len(self.selected) == 0:
             self.select_single(x, y)
+            return
+
+
+        sx = self.selected[0].x
+        sy = self.selected[0].y
+
+        minx = min(sx, x)
+        maxx = max(sx, x)
+        miny = min(sy, y)
+        maxy = max(sy, y)
+        for x in range(minx, maxx + 1):
+            for y in range(miny, maxy + 1):
+                # Don't append the currently selected cell twice!
+                if x == sx and y == sy:
+                    continue
+
+                # Don't store it in a variable, because python sucks, and overrides it :(
+                self.cells[x][y].select()
+                self.selected.append(self.cells[x][y])
+
 
 
     def reset_selected(self) -> None:
         for selected in self.selected:
-            self.cells[selected[0]][selected[1]].unselect()
+            selected.unselect()
 
         self.selected.clear()
 
 
     def for_all_selected(self, fn: Callable[[Cell], None]) -> None:
-        for selected in self.selected:
-            cell = self.cells[selected[0]][selected[1]]
+        for cell in self.selected:
             fn(cell)
-            cell.update()
+            cell.update_cell()
+
+    
+    def multi_select(self) -> bool:
+        return len(self.selected) > 1
+
+
+@final
+class SettingsFrame(tk.CTkFrame):
+    def __init__(self, master, cellgrid: CellGridFrame):
+        super().__init__(master)
+        _ = self.grid_columnconfigure(0, weight=1)
+        _ = self.grid_rowconfigure(iota(4), weight=1)
+
+        self.cellgrid: CellGridFrame = cellgrid
+
+        self.number_settings = tk.CTkFrame(self)
+        self.number_settings.grid(row=0, column=0)
+        _ = self.number_settings.grid_columnconfigure(0, weight=1)
+        _ = self.number_settings.grid_rowconfigure(iota(6), weight=1)
 
 
 
-class VegType(Enum):
-    TYPE1 = 0,
-    TYPE2 = 1,
+        text = tk.CTkEntry(self.number_settings, height=32, justify="center")
+        text.grid(row=0, column=0, pady=(0,10))
+        text.insert(0, "moisture")
+        text.configure(state="disabled")
+
+        self.moisture_meter = Spinbox(self.number_settings, command=self.moisture_callback)
+        self.moisture_meter.grid(row=1, column=0, pady=10, padx=10)
+        self.moisture_meter.set(0)
+
+        text = tk.CTkEntry(self.number_settings, height=32, justify="center")
+        text.grid(row=2, column=0, pady=(0,10))
+        text.insert(0, "fuel")
+        text.configure(state="disabled")
+
+        self.fuel_meter = Spinbox(self.number_settings, command=self.fuel_callback)
+        self.fuel_meter.grid(row=3, column=0, pady=10, padx=10)
+        self.fuel_meter.set(0)
+
+        text = tk.CTkEntry(self.number_settings, height=32, justify="center")
+        text.grid(row=4, column=0, pady=(0,10))
+        text.insert(0, "heat")
+        text.configure(state="disabled")
+
+        self.heat_meter = Spinbox(self.number_settings, command=self.heat_callback)
+        self.heat_meter.grid(row=5, column=0, pady=10, padx=10)
+        self.heat_meter.set(0)
 
 
-class CellState(Enum):
-    NORMAL = 'N',
-    ONFIRE = 'F',
-    BURNTOUT = 'O',
+
+        self.onfire = tk.CTkButton(self, text="onfire", command=lambda: self.set_selected_cellstate(CellState.ONFIRE), width=100, height=100)
+        self.onfire.grid(row=1, column=0, padx=10, pady=10)
+
+        self.burnt = tk.CTkButton(self, text="burnt", command=lambda: self.set_selected_cellstate(CellState.BURNTOUT), width=100, height=100)
+        self.burnt.grid(row=2, column=0, padx=10, pady=10)
+
+        self.normal = tk.CTkButton(self, text="normal", command=lambda: self.set_selected_cellstate(CellState.NORMAL), width=100, height=100)
+        self.normal.grid(row=3, column=0, padx=10, pady=10)
 
 
+    def update_selected(self, selected: list[Cell]) -> None:
+        if len(selected) == 0:
+            return
+
+        if len(selected) > 1:
+            self.moisture_meter.set(0)
+            self.fuel_meter.set(0)
+            self.heat_meter.set(0)
+        else:
+            self.moisture_meter.set(selected[0].moisture)
+            self.fuel_meter.set(selected[0].fuel)
+            self.heat_meter.set(selected[0].heat)
+
+
+    def set_selected_cellstate(self, state: CellState) -> None:
+        self.cellgrid.for_all_selected(lambda cell: cell.set_state(state))
+
+
+    def moisture_callback(self, moist: float) -> None:
+        # If we have multiple cells selected at once, we increment by the amount
+        if self.cellgrid.multi_select():
+            self.cellgrid.for_all_selected(lambda cell: cell.set_moisture(cell.moisture + moist))
+            self.moisture_meter.set(0) # Reset the value, so we don't increment twice
+        # Only 1 selected, we just set the value directly:
+        else:
+            self.cellgrid.for_all_selected(lambda cell: cell.set_moisture(moist))
+
+
+    def fuel_callback(self, fuel: float) -> None:
+        # If we have multiple cells selected at once, we increment by the amount
+        if self.cellgrid.multi_select():
+            self.cellgrid.for_all_selected(lambda cell: cell.set_fuel(cell.fuel + fuel))
+            self.fuel_meter.set(0) # Reset the value, so we don't increment twice
+        # Only 1 selected, we just set the value directly:
+        else:
+            self.cellgrid.for_all_selected(lambda cell: cell.set_fuel(fuel))
+
+
+    def heat_callback(self, heat: float) -> None:
+        # If we have multiple cells selected at once, we increment by the amount
+        if self.cellgrid.multi_select():
+            self.cellgrid.for_all_selected(lambda cell: cell.set_heat(cell.heat + heat))
+            self.heat_meter.set(0) # Reset the value, so we don't increment twice
+        # Only 1 selected, we just set the value directly:
+        else:
+            self.cellgrid.for_all_selected(lambda cell: cell.set_heat(heat))
+
+
+@final
+class ViewModeFrame(tk.CTkFrame):
+    def __init__(self, master, command: Callable[[ViewMode], None]):
+        super().__init__(master)
+        self.command = command
+
+        for i, mode in enumerate(ViewMode):
+            _ = self.grid_columnconfigure(i, weight=1)
+            button = self.make_button(mode)
+            button.grid(row=0, column=i, padx=10, pady=10)
+
+
+    def make_button(self, mode: ViewMode) -> tk.CTkButton:
+        return tk.CTkButton(self, text=mode.name, command=lambda: self.set_mode(mode), height=60)
+
+    def set_mode(self, mode: ViewMode) -> None:
+        global viewmode
+        viewmode = mode
+        self.command(mode)
+
+
+@final
 class App(tk.CTk):
     def __init__(self):
         super().__init__()
@@ -168,42 +414,52 @@ class App(tk.CTk):
         self.resizable(False, False)
         self.title("my app")
         self.geometry(f"{screen_width}x{screen_height}")
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
+        _ = self.grid_rowconfigure(0, weight=1)
+        _ = self.grid_rowconfigure(1, weight=3)
+        _ = self.grid_columnconfigure(iota(3), weight=1)
+        self.update()
 
-        self.shift_held: bool = False
+        self.cellgrid = CellGridFrame(self, (50, 50), self.update_selected)
+        self.cellgrid.grid(row=0, column=0, rowspan=2, padx=10, pady=10, sticky="sw")
 
-        self.cell_grid = CellGridFrame(self, (13, 13))
-        self.cell_grid.grid(row=0, column=0, padx=10, pady=10, sticky="nsw")
+        self.viewmodes = ViewModeFrame(self, self.update_viewmode)
+        self.viewmodes.grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="ne")
 
-        self.frame = tk.CTkFrame(self)
-        self.frame.grid(row=0, column=1, padx=10, pady=10, sticky="e")
+        self.veg_types_frame = tk.CTkFrame(self)
+        self.veg_types_frame.grid(row=1, column=1, padx=10, pady=10, sticky="e")
 
-        self.frame.grid_columnconfigure(0, weight=1)
-        self.frame.grid_rowconfigure(iota(10), weight=1)
-
-        button = tk.CTkButton(self.frame, text="onfire", command=lambda: self.set_selected_cellstate(CellState.ONFIRE), width=100, height=100)
-        button.grid(row=0, column=0, padx=10, pady=10)
-
-        button = tk.CTkButton(self.frame, text="burnt", command=lambda: self.set_selected_cellstate(CellState.BURNTOUT), width=100, height=100)
-        button.grid(row=1, column=0, padx=10, pady=10)
-
-        button = tk.CTkButton(self.frame, text="normal", command=lambda: self.set_selected_cellstate(CellState.NORMAL), width=100, height=100)
-        button.grid(row=2, column=0, padx=10, pady=10)
-
-    
-    def set_selected_cellstate(self, state: CellState) -> None:
-        self.cell_grid.for_all_selected(lambda cell: self.set_cellstate(cell, state))
+        for i, veg_type in enumerate(VegType):
+            _ = self.veg_types_frame.grid_rowconfigure(i, weight=1)
+            button = self.make_veg_type_button(veg_type)
+            button.grid(row=i, column=0, padx=10, pady=10)
 
 
-    def set_cellstate(self, cell: Cell, state: CellState) -> None:
-        cell.state = state
+        self.settings = SettingsFrame(self, self.cellgrid)
+        self.settings.grid(row=1, column=2, padx=10, pady=10, sticky="e")
+
+    def make_veg_type_button(self, veg_type: VegType) -> tk.CTkButton:
+        return tk.CTkButton(self.veg_types_frame, text=veg_type.name, command=lambda: self.set_veg_type(veg_type), height=60)
+
+
+    def set_veg_type(self, type: VegType) -> None:
+        self.cellgrid.for_all_selected(lambda cell: cell.set_type(type))
+
+    def update_selected(self, selected: list[Cell]) -> None:
+        self.settings.update_selected(selected)
+
+    def update_viewmode(self, mode: ViewMode) -> None:
+        _ = mode
+        for row in self.cellgrid.cells:
+            for cell in row:
+                cell.update_cell()
 
 
 
-app = App()
-app.bind("<KeyPress>", on_press_key)
-app.bind("<KeyRelease>", on_release_key)
-app.mainloop()
+if __name__ == "__main__":
+    app = App()
+    _ = app.bind("<KeyPress>", on_press_key)
+    _ = app.bind("<KeyRelease>", on_release_key)
+    _ = app.bind("<Button-3>", lambda _: app.cellgrid.reset_selected())
+    app.mainloop()
 
 

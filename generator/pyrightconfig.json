@@ -1,0 +1,6 @@
+{
+    "reportUnknownParameterType": false,
+    "reportMissingParameterType": false,
+    "reportUnknownMemberType": false,
+    "reportUnknownArgumentType": false,
+}
