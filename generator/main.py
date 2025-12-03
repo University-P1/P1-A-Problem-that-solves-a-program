@@ -1,7 +1,10 @@
 from enum import Enum
-from typing import Callable, TypeVar, final, TYPE_CHECKING
+from io import BufferedReader, BufferedWriter, FileIO
+from typing import Callable, Self, TypeVar, final, TYPE_CHECKING, overload, override
 import customtkinter as tk
 from spinbox import Spinbox
+
+from sys import argv
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparisonT
@@ -56,11 +59,35 @@ class VegType(Enum):
     AGROFORESTRY = 'A',
     NOTFIREPRONE = 'N',
 
+    def get(self) -> str:
+        return str(self.value[0])
+
+
+def veg_type_from_str(input: str) -> VegType:
+    for type in VegType:
+        if input == type.get():
+            return type
+
+    print(f"Invalid VegType string: {input}")
+    exit(1)
+
 
 class CellState(Enum):
-    NORMAL = 'N',
-    ONFIRE = 'F',
-    BURNTOUT = 'O',
+    NORMAL = 'N'
+    ONFIRE = 'F'
+    BURNTOUT = 'O'
+
+    def get(self) -> str:
+        return str(self.value[0])
+
+
+def cell_state_from_str(input: str) -> CellState:
+    for state in CellState:
+        if input == state.get():
+            return state
+
+    print(f"Invalid CellState string: {input}")
+    exit(1)
 
 
 @final
@@ -89,11 +116,11 @@ class Cell(tk.CTkButton):
             command=self.callback
         )
 
-        self.type: VegType = VegType.BROADLEAVES
+        self.type: VegType = VegType.NOTFIREPRONE
         self.state: CellState = CellState.NORMAL
-        self.moisture: float = 0
-        self.fuel: float = 0
-        self.heat: float = 0
+        self.moisture: int = 0
+        self.fuel: int = 0
+        self.heat: int = 0
 
     def callback(self) -> None:
         self.command(self.x, self.y)
@@ -106,6 +133,19 @@ class Cell(tk.CTkButton):
     def unselect(self) -> None:
         self.configure(border_color="black", border_width=1)
         self.update_cell()
+
+
+    @override
+    def __str__(self) -> str:
+        return f"""
+            {{
+                .state = {self.state}
+                .type = {self.type}
+                .moisture = {self.moisture}
+                .heat = {self.heat}
+                .fuel = {self.fuel}
+            }}
+        """
 
 
     def update_cell(self) -> None:
@@ -144,23 +184,22 @@ class Cell(tk.CTkButton):
                         col = "grey"
 
             case ViewMode.MOISTURE:
-                moist_hex = format(int(self.moisture), "x")
+                moist_hex = format(round(self.moisture / 100 * 255), "x")
 
             case ViewMode.FUEL:
-                fuel_hex = format(int(self.fuel), "x")
+                fuel_hex = format(round(self.fuel / 100 * 255), "x")
 
             case ViewMode.HEAT:
-                heat_hex = format(int(self.heat), "x")
+                heat_hex = format(round(self.heat / 100 * 255), "x")
 
             case ViewMode.COMBINED:
-                moist_hex = format(int(self.moisture), "x")
-                fuel_hex = format(int(self.fuel), "x")
-                heat_hex = format(int(self.heat), "x")
+                moist_hex = format(round(self.moisture / 100 * 255), "x")
+                fuel_hex = format(round(self.fuel / 100 * 255), "x")
+                heat_hex = format(round(self.heat / 100 * 255), "x")
 
 
         if col is None:
             fixHex: Callable[[str], str] = lambda h: "0" + h if len(h) <= 1 else h
-
 
             col = "#{}{}{}".format(fixHex(heat_hex), fixHex(fuel_hex), fixHex(moist_hex))
 
@@ -172,21 +211,42 @@ class Cell(tk.CTkButton):
     def set_state(self, state: CellState) -> None:
         self.state = state
 
-    def set_moisture(self, moist: float) -> None:
-        self.moisture = clamp(moist, 0, 255)
+    def set_moisture(self, moist: int) -> None:
+        self.moisture = clamp(moist, 0, 100)
 
-    def set_fuel(self, fuel: float) -> None:
-        self.fuel = clamp(fuel, 0, 255)
+    def set_fuel(self, fuel: int) -> None:
+        self.fuel = clamp(fuel, 0, 100)
 
-    def set_heat(self, heat: float) -> None:
-        self.heat = clamp(heat, 0, 255)
+    def set_heat(self, heat: int) -> None:
+        self.heat = clamp(heat, 0, 100)
+
+
+    def serialize(self) -> str:
+        out: str = ""
+        out += self.state.get() + ","
+        out += self.type.get() + ","
+        out += str(self.fuel) + ","
+        out += str(self.heat) + ","
+        out += str(self.moisture) + ","
+
+        return out
+
+    def update_from_serialized(self, serialized: bytes) -> None:
+        data = serialized.split(b",")
+        
+        self.state = cell_state_from_str(data[0].decode())
+        self.type = veg_type_from_str(data[1].decode())
+        self.fuel = int(data[2])
+        self.heat = int(data[3])
+        self.moisture = int(data[4])
 
 
 @final
 class CellGridFrame(tk.CTkFrame):
     def __init__(self, master,
                  gridsize: tuple[int, int],
-                 command: Callable[[list[Cell]], None]) -> None:
+                 command: Callable[[list[Cell]], None],
+                 in_file: BufferedReader | None) -> None:
         width: int = int(master.winfo_width() * 0.85)
         height: int = int(master.winfo_height() * 0.85)
 
@@ -207,13 +267,17 @@ class CellGridFrame(tk.CTkFrame):
             self.cells.append([])
             row = self.cells[row_num]
             for col_num in range(gridsize[1]):
-                row.append(self.make_cell(row_num, col_num))
+                row.append(self.make_cell(row_num, col_num, in_file))
                 row[col_num].update_cell()
 
 
-    def make_cell(self, x: int, y: int):
+    def make_cell(self, x: int, y: int, reader: BufferedReader | None):
         cell = Cell(self, x, y, self.select_button)
         cell.grid(row=x, column=y)
+
+        if reader is not None:
+            cell.update_from_serialized(reader.readline())
+
         return cell
 
 
@@ -226,8 +290,15 @@ class CellGridFrame(tk.CTkFrame):
             self.select_single(x, y)
 
         
-        # deduplicate
-        self.selected = list(set(self.selected))
+        # deduplicate, keeping order
+        unique: set[Cell] = set([])
+        new_list: list[Cell] = []
+        for cell in self.selected:
+            if cell not in unique:
+                new_list.append(cell)
+
+        self.selected = new_list
+
         self.command(self.selected)
 
 
@@ -246,23 +317,30 @@ class CellGridFrame(tk.CTkFrame):
             return
 
 
-        sx = self.selected[0].x
-        sy = self.selected[0].y
+        first = self.selected[0]
+        sx = first.x
+        sy = first.y
 
-        minx = min(sx, x)
-        maxx = max(sx, x)
-        miny = min(sy, y)
-        maxy = max(sy, y)
-        for x in range(minx, maxx + 1):
-            for y in range(miny, maxy + 1):
+        x_is_backwards = x < sx
+        y_is_backwards = y < sy
+
+        x_range = range(sx, x - 1, -1) if x_is_backwards else range(sx, x + 1)
+        y_range = range(sy, y - 1, -1) if y_is_backwards else range(sy, y + 1)
+
+        for x_pos in x_range:
+            for y_pos in y_range:
                 # Don't append the currently selected cell twice!
-                if x == sx and y == sy:
+                if x_pos == sx and y_pos == sy:
                     continue
 
                 # Don't store it in a variable, because python sucks, and overrides it :(
-                self.cells[x][y].select()
-                self.selected.append(self.cells[x][y])
+                self.cells[x_pos][y_pos].select()
+                self.selected.append(self.cells[x_pos][y_pos])
 
+
+        # Set the selected cell as the first element
+        self.selected.remove(self.cells[x][y])
+        self.selected.insert(0, self.cells[x][y])
 
 
     def reset_selected(self) -> None:
@@ -295,7 +373,6 @@ class SettingsFrame(tk.CTkFrame):
         self.number_settings.grid(row=0, column=0)
         _ = self.number_settings.grid_columnconfigure(0, weight=1)
         _ = self.number_settings.grid_rowconfigure(iota(6), weight=1)
-
 
 
         text = tk.CTkEntry(self.number_settings, height=32, justify="center")
@@ -397,6 +474,10 @@ class ViewModeFrame(tk.CTkFrame):
             button.grid(row=0, column=i, padx=10, pady=10)
 
 
+        button = tk.CTkButton(self, height=80, text="Export", fg_color="red", command=master.export)
+        button.grid(row=0, column=len(ViewMode), padx=10, pady=10)
+
+
     def make_button(self, mode: ViewMode) -> tk.CTkButton:
         return tk.CTkButton(self, text=mode.name, command=lambda: self.set_mode(mode), height=60)
 
@@ -419,7 +500,15 @@ class App(tk.CTk):
         _ = self.grid_columnconfigure(iota(3), weight=1)
         self.update()
 
-        self.cellgrid = CellGridFrame(self, (50, 50), self.update_selected)
+        try:
+            size = (int(argv[1]), int(argv[2])) if len(argv) >= 3 else (50, 50)
+        except:
+            print("Invalid parameters!!")
+            exit(1)
+
+        in_file = open(argv[3], mode="rb") if len(argv) == 4 else None
+
+        self.cellgrid = CellGridFrame(self, size, self.update_selected, in_file)
         self.cellgrid.grid(row=0, column=0, rowspan=2, padx=10, pady=10, sticky="sw")
 
         self.viewmodes = ViewModeFrame(self, self.update_viewmode)
@@ -437,6 +526,19 @@ class App(tk.CTk):
         self.settings = SettingsFrame(self, self.cellgrid)
         self.settings.grid(row=1, column=2, padx=10, pady=10, sticky="e")
 
+
+    def export(self) -> None:
+        with BufferedWriter(FileIO("./output.cellgrid", mode="wb")) as writer:
+            for row in self.cellgrid.cells:
+                writer.writelines([(cell.serialize() + "\n").encode() for cell in row])
+
+            writer.flush()
+
+
+        print("Export complete!")
+        exit(0)
+
+
     def make_veg_type_button(self, veg_type: VegType) -> tk.CTkButton:
         return tk.CTkButton(self.veg_types_frame, text=veg_type.name, command=lambda: self.set_veg_type(veg_type), height=60)
 
@@ -444,8 +546,10 @@ class App(tk.CTk):
     def set_veg_type(self, type: VegType) -> None:
         self.cellgrid.for_all_selected(lambda cell: cell.set_type(type))
 
+
     def update_selected(self, selected: list[Cell]) -> None:
         self.settings.update_selected(selected)
+
 
     def update_viewmode(self, mode: ViewMode) -> None:
         _ = mode

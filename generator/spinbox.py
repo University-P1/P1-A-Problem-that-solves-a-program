@@ -9,7 +9,7 @@ class Spinbox(tk.CTkFrame):
     def __init__(self, *args,
                  width: int = 100,
                  height: int = 32,
-                 step_size: int | float = 1,
+                 step_size: int = 3,
                  command: Callable[[float], None] | None = None,
                  **kwargs):
         super().__init__(*args, width=width, height=height, **kwargs)
@@ -34,11 +34,11 @@ class Spinbox(tk.CTkFrame):
         self.add_button.grid(row=0, column=2, padx=(0, 3), pady=3)
 
         # default value
-        self.entry.insert(0, "0.0")
+        self.entry.insert(0, "0")
 
     def add_button_callback(self):
         try:
-            value = float(self.entry.get()) + self.step_size
+            value = int(self.entry.get()) + self.step_size
             self.entry.delete(0, "end")
             self.entry.insert(0, value)
         except ValueError:
@@ -50,7 +50,7 @@ class Spinbox(tk.CTkFrame):
 
     def subtract_button_callback(self):
         try:
-            value = float(self.entry.get()) - self.step_size
+            value = int(self.entry.get()) - self.step_size
             self.entry.delete(0, "end")
             self.entry.insert(0, value)
         except ValueError:
@@ -60,13 +60,13 @@ class Spinbox(tk.CTkFrame):
             self.command(value)
 
 
-    def get(self) -> float | None:
+    def get(self) -> int | None:
         try:
-            return float(self.entry.get())
+            return int(self.entry.get())
         except ValueError:
             return None
 
 
-    def set(self, value: float):
+    def set(self, value: int):
         self.entry.delete(0, "end")
-        self.entry.insert(0, str(float(value)))
+        self.entry.insert(0, str(int(value)))
