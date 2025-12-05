@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from enum import Enum
 from io import BufferedReader, BufferedWriter, FileIO
 from typing import Callable, Self, TypeVar, final, TYPE_CHECKING, overload, override
