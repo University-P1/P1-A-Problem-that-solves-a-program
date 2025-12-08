@@ -36,22 +36,22 @@ void spreadToNeighbours(const CellularAutomaton* automaton, size_t row, size_t c
     Cell spreading_cell = cells.elements[col];
 
     // Looping over neighbouring cells
-    for (int neighbour_row = (int)row - 1; neighbour_row < row + 1; neighbour_row++ ) {
+    for (int neighbour_row = (int)row - 1; neighbour_row < (int)row + 1; neighbour_row++ ) {
         // if row is out of bounds = skip
         if (neighbour_row < 0 ) {
             continue;
         }
-        if (neighbour_row >= automaton->num_rows) {
+        if (neighbour_row >= (int)automaton->num_rows) {
             break;
         }
         CellArray neighbour_cell_arr = automaton->rows[neighbour_row];
 
-        for (int neighbour_col = (int)col - 1; neighbour_col < col + 1; neighbour_col++) {
+        for (int neighbour_col = (int)col - 1; neighbour_col < (int)col + 1; neighbour_col++) {
             // if column is out of bounds = skip
             if (neighbour_col < 0) {
                 continue;
             }
-            if (neighbour_col >= cells.count) {
+            if (neighbour_col >= (int)cells.count) {
                 break;
             }
             Cell* neighbouring_cell = &neighbour_cell_arr.elements[neighbour_col];
@@ -77,7 +77,7 @@ void spreadToNeighbours(const CellularAutomaton* automaton, size_t row, size_t c
 
 float chanceToSpread(const Cell* src, const Cell* dst) {
 
-    // tabal of nominal fire probability from source https://www.mdpi.com/2571-6255/3/3/26
+    // tabel of nominal fire probability from source https://www.mdpi.com/2571-6255/3/3/26
     float nominals[VEG_LAST][VEG_LAST] = {
         //   B      S     G     FP     AF   N
         {.3f, .375f, .25f, .275f, .25f, .25f},      // B
@@ -91,16 +91,26 @@ float chanceToSpread(const Cell* src, const Cell* dst) {
     // nominal fire probability
     float p_n = nominals[src->type][dst->type];
 
-    //moisture level from 1-100 in the cell we are trying to spread to
-    float m_l = dst->moisture;
-    // moisture level factor, the higher the moisture level, the more negative it becomes, therefore lower chance
-    // chance of spreading
-    float e_m = expf(-0.014f * m_l);
+    // Fine fuel moisture content, between 0 and 1, the higher the drier.
+    float e_m = 1 - dst->moisture;
+
+    float vel_rand = (float)rand() / (float)RAND_MAX * 1.0f;
+    float vel_multi =  (1 - vel_rand)*(0.8f) + vel_rand*(1.2f);
+
+    float angle_rand = (float)rand() / (float)RAND_MAX * 1.0f;
+    float angle_add = (1 - angle_rand)*(-11.25f) + angle_rand*(11.25f);
+
+    // calculating the wind factor. Speed and direction.
+    float a_w;
+
+
+    // Slope angle set to 1, we will not implement this slope angle.
+    float a_h = 1.0f;
 
     // wind and slope factor set to 1 for now
-    float a_wh = 1.0f;
+    float a_wh = a_w * a_h;
 
-    // algorith from source, spread probability from burning cell to neighbuoring cell
+    // algorith from source, spread probability from burning cell to neighboring cell
     float p_burn = (1 - powf(1 - p_n,a_wh)) * e_m;
 
     return p_burn;
