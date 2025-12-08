@@ -17,7 +17,7 @@ int main(int argc, char const* const* argv) {
 
 
     int step;
-    printf("Indtast hvor mange gange simulationen skal køre");
+    printf("How many times do you wish for the simulation to run?");
     scanf("%d" ,&step);
     
 
