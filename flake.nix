@@ -23,6 +23,18 @@
             p.customtkinter
             p.tkinter
           ]))
+
+          wayland
+          wayland-scanner
+          wayland-protocols
+
+          libxkbcommon
+          egl-wayland
+          pkg-config
+          libGL
+          vulkan-headers
+          vulkan-loader
+          libdecor
         ];
       };
     };
