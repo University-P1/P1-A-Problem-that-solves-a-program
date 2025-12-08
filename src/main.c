@@ -17,8 +17,9 @@ int main(int argc, char const* const* argv) {
 
 
     int step;
-    scanf("%d" ,&step);
     printf("Indtast hvor mange gange simulationen skal køre");
+    scanf("%d" ,&step);
+    
 
     for (int i = 0; i < step; i++) {
         // Spread fire
