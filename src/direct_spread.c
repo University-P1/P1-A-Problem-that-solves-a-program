@@ -10,7 +10,7 @@ float chanceToSpread(const Cell* src, const Cell* dst, float a_w);
 
 float wind_effect_table[5][5] = {
     // Chatgpt read the graph, check if they are correct.
-    // Wind factor, effect of wind and direction between the neighboring cell and the burning cell
+    // Wind factor, effect of wind and direction between the neighboring cell and the burning cell.
     //   0°     45°    90°    135°   190°
     {1.20f, 1.05f, 1.00f, 1.00f, 1.00f}, // 10 km/h
     {2.50f, 1.70f, 1.20f, 0.90f, 0.80f}, // 30 km/h
