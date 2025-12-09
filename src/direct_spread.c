@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void spreadToNeighbors(const CellularAutomaton* automaton, size_t row, size_t col);
+void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* out, size_t row, size_t col);
 float chanceToSpread(const Cell* src, const Cell* dst, float a_w);
 
 float wind_effect_table[WIND_LAST][5] = {
@@ -33,6 +33,7 @@ int windDifferenceIndex(int ax, int ay, int bx, int by) {
 
 /// Modifies the Cellular Automaton by spreading the fire between cells
 void directSpread(const CellularAutomaton* automaton) {
+
     // we iterate through our grid of cells
     for (size_t row = 0; row < automaton->num_rows; row++ ) {
         CellArray cell_arr = automaton->rows[row];
@@ -50,7 +51,7 @@ void directSpread(const CellularAutomaton* automaton) {
     }
 }
 
-void spreadToNeighbors(const CellularAutomaton* automaton, size_t row, size_t col) {
+void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* out, size_t row, size_t col) {
     // input validation
     assert(row < automaton->num_rows && "out of bounds");
     CellArray cells = automaton->rows[row];
