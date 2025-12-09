@@ -66,14 +66,14 @@ CellularAutomaton readInitialState(const char* path) {
         goto err_failed_read;
 
     if (strlen(header_line) == sizeof(header_line)) {
-        fputs("ERROR: header line unexpectedly long", stderr);
+        fputs("ERROR: header line unexpectedly long\n", stderr);
         goto err_close_file;
     }
 
     // Parse headers
     const size_t bytes_read = parseNumberValues(header_line, header_addresses, num_headers);
     if (bytes_read == 0) {
-        fputs("Failed reading header values", stderr);
+        fputs("Failed reading header values\n", stderr);
         goto err_close_file;
     }
     
