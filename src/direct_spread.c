@@ -8,10 +8,10 @@
 void spreadToNeighbors(const CellularAutomaton* automaton, size_t row, size_t col);
 float chanceToSpread(const Cell* src, const Cell* dst, float a_w);
 
-float wind_effect_table[5][5] = {
+float wind_effect_table[WIND_LAST][5] = {
     // Chatgpt read the graph, check if they are correct.
     // Wind factor, effect of wind and direction between the neighboring cell and the burning cell.
-    //   0°     45°    90°    135°   190°
+    //   0°     45°    90°    135°   180°
     {1.20f, 1.05f, 1.00f, 1.00f, 1.00f}, // 10 km/h
     {2.50f, 1.70f, 1.20f, 0.90f, 0.80f}, // 30 km/h
     {3.10f, 1.90f, 1.10f, 0.70f, 0.60f}, // 50 km/h
@@ -19,38 +19,16 @@ float wind_effect_table[5][5] = {
     {3.70f, 2.20f, 0.80f, 0.40f, 0.35f}  // 90 km/h
 };
 
-// Giving wind speed an index so we can chose a value from the table.
-int wind_speed_index(WindSpeed speed) {
-    return (int)speed;
-}
 
-// giving wind direction an index so we can choose a value from the table.
-int dir_from_vec(int x, int y) {
-    if (x == -1 && y == -1) {
-        return 0; // wind blowing North west
-    }
-    if (x ==  0 && y == -1) {
-        return 1; // wind blowing north
-    }
-    if (x ==  1 && y == -1){
-        return 2; // wind blowing northeast
-    }
-    if (x == -1 && y ==  0) {
-        return 3; // wind blowing west
-    }
-    if (x ==  1 && y ==  0) {
-        return 4; // wind blowing east
-    }
-    if (x == -1 && y ==  1) {
-        return 5; // wind blowing southwest
-    }
-    if (x ==  0 && y ==  1) {
-        return 6; // wind blowing south
-    }
-    if (x ==  1 && y ==  1) {
-        return 7; // wind blowing southeast
-    }
-    return -1;
+/// ax and ay represent one vector, and bx and by represent another
+/// we take the difference of the two vectors,
+/// take the absolute value of the resulting vector
+/// and take the sum of it's components
+int windDifferenceIndex(int ax, int ay, int bx, int by) {
+    int new_x = ax - bx;
+    int new_y = ay - by;
+
+    return abs(new_x) + abs(new_y);
 }
 
 /// Modifies the Cellular Automaton by spreading the fire between cells
@@ -108,23 +86,13 @@ void spreadToNeighbors(const CellularAutomaton* automaton, size_t row, size_t co
             int dx = neighbour_col - (int)col;
             int dy = neighbour_row - (int)row;
 
-            // Getting an index for what direction the wind is blowing (1,1) = 7 = southeast
-            int wind_dir = dir_from_vec(automaton->windX, automaton->windY);
-            int w_idx = wind_speed_index(automaton->speed);
-
-            // finding out what direction the neighboring cell is in compared to the burning cell
-            int neighbour_dir = dir_from_vec(dx, dy);
-
-            // Calculating the difference in wind direction and the neighbor cell
-            int diff = abs(wind_dir - neighbour_dir);
-            if (diff > 4) diff = 8 - diff;
-
-            int angle_index = diff;
+            // Pick the correct index for the wind_effect_table
+            int angle_index = windDifferenceIndex(automaton->windX, automaton->windY, dx, dy);
 
             /* picking our wind factor value from the table, based on wind speed and direction
                compared to the cell burning cell
              */
-            float a_w = wind_effect_table[w_idx][angle_index];
+            float a_w = wind_effect_table[automaton->speed][angle_index];
 
             // calculating the chance the spreading cell will ignite the neighbouring cell
             float chance = chanceToSpread(&spreading_cell, neighbouring_cell, a_w);
