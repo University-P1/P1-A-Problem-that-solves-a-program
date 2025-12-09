@@ -27,6 +27,8 @@ typedef enum WindSpeed {
     WIND_MODERATE,
     WIND_FAST,
     WIND_EXTREME,
+
+    WIND_LAST,
 } WindSpeed;
 
 typedef struct Cell {
