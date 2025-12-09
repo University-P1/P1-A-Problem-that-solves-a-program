@@ -4,9 +4,11 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* out, size_t row, size_t col);
 float chanceToSpread(const Cell* src, const Cell* dst, float a_w);
+CellularAutomaton cloneAutomaton(const CellularAutomaton* automaton);
 
 float wind_effect_table[WIND_LAST][5] = {
     // Chatgpt read the graph, check if they are correct.
@@ -33,7 +35,7 @@ int windDifferenceIndex(int ax, int ay, int bx, int by) {
 
 /// Modifies the Cellular Automaton by spreading the fire between cells
 void directSpread(const CellularAutomaton* automaton) {
-
+    CellularAutomaton write_automaton = cloneAutomaton(automaton);
     // we iterate through our grid of cells
     for (size_t row = 0; row < automaton->num_rows; row++ ) {
         CellArray cell_arr = automaton->rows[row];
@@ -44,7 +46,7 @@ void directSpread(const CellularAutomaton* automaton) {
             }
             // We know the cell is on fire
             // We are looping over neighbouring cells to check if they are going to catch fire
-            spreadToNeighbors(automaton, row, col);
+            spreadToNeighbors(automaton, &write_automaton, row, col);
 
         }
 
@@ -70,6 +72,8 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
         }
         CellArray neighbour_cell_arr = automaton->rows[neighbour_row];
 
+        CellArray output_cell_arr = out->rows[neighbour_row];
+
         for (int neighbour_col = (int)col - 1; neighbour_col <= (int)col + 1; neighbour_col++) {
             // if column is out of bounds = skip
             if (neighbour_col < 0) {
@@ -79,6 +83,8 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
                 break;
             }
             Cell* neighbouring_cell = &neighbour_cell_arr.elements[neighbour_col];
+
+            Cell* output_cell = &output_cell_arr.elements[neighbour_col];
 
             if (neighbouring_cell->state != CELLSTATE_NORMAL) {
                 continue;
@@ -104,7 +110,7 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
             }
 
             // The fire spreads to the cell :)
-            neighbouring_cell->state = CELLSTATE_ONFIRE;
+             output_cell->state= CELLSTATE_ONFIRE;
         }
 
     }
