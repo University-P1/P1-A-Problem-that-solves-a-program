@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.0.2)
-project(wildire-spotting C)
+project(wildfire-spotting C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -43,8 +43,7 @@ target_compile_options(wildfire-spotting PRIVATE
     # -Werror damn SDL is riddled with warnings
 )
 
-# if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-#     target_compile_options(wildfire-spotting PRIVATE
-#         -fsanitize=address
-#     )
-# endif()
+if (ENABLE_ASAN)
+    target_compile_options(wildfire-spotting PRIVATE -fsanitize=address)
+    target_link_options(wildfire-spotting PRIVATE -fsanitize=address)
+endif()
