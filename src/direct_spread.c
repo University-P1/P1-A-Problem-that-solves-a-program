@@ -98,7 +98,7 @@ void spreadToNeighbors(const CellularAutomaton* automaton, size_t row, size_t co
         }
         CellArray neighbour_cell_arr = automaton->rows[neighbour_row];
 
-        for (int neighbour_col = (int)col - 1; neighbour_col < (int)col + 1; neighbour_col++) {
+        for (int neighbour_col = (int)col - 1; neighbour_col <= (int)col + 1; neighbour_col++) {
             // if column is out of bounds = skip
             if (neighbour_col < 0) {
                 continue;
