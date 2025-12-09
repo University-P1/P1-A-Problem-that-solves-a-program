@@ -13,8 +13,7 @@
 int min(int a, int b) {
     if (a < b)
         return a;
-
-    return b;
+return b;
 }
 
 void drawCell(const CellularAutomaton* automaton, size_t row, size_t col, void* userdata) {
@@ -105,8 +104,6 @@ SDLState initSDL(int w, int h) {
         SDL_Log( "Surface could not be created! SDL error: %s\n", SDL_GetError() );
         return res;
     }
-
-    SDL_SetWindowResizable(win, false);
 
     res.win = win;
     res.surf = surf;
