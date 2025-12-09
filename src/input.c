@@ -57,7 +57,8 @@ CellularAutomaton readInitialState(const char* path) {
     int height;
     int windX;
     int windY;
-    int* header_addresses[4] = {&width, &height, &windX, &windY};
+    int speed;
+    int* header_addresses[] = {&width, &height, &windX, &windY, &speed};
     const uint8_t num_headers = sizeof(header_addresses) / sizeof(header_addresses[0]);
 
     // Load the first line, which holds the headers
@@ -83,6 +84,18 @@ CellularAutomaton readInitialState(const char* path) {
     }
     if (width < 0) {
         fputs("ERROR: Header value \"width\" has a negative value\n", stderr);
+        goto err_close_file;
+    }
+    if (windX > 1 || windX < -1) {
+        fputs("ERROR: Header value \"windX\" is not between 1 and -1\n", stderr);
+        goto err_close_file;
+    }
+    if (windY > 1 || windY < -1) {
+        fputs("ERROR: Header value \"windY\" is not between 1 and -1\n", stderr);
+        goto err_close_file;
+    }
+    if (speed < 0 || speed > 4) {
+        fputs("ERROR: Header value \"speed\" is not between 0 and 4\n", stderr);
         goto err_close_file;
     }
 
@@ -115,8 +128,9 @@ CellularAutomaton readInitialState(const char* path) {
     const CellularAutomaton automaton = {
         .num_rows = h,
         .rows = cell_arrays,
-        .windY = (float)windY / 100.f,
-        .windX = (float)windX / 100.f,
+        .windY = windY,
+        .windX = windX,
+        .speed = (WindSpeed)speed,
     };
 
 
