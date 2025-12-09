@@ -39,8 +39,9 @@ typedef struct CellArray {
 typedef struct CellularAutomaton {
     CellArray* const rows;
     size_t num_rows;
-    float windX;
-    float windY;
+    int windX;
+    int windY;
+    float wind_speed;
     /* other stuff maybe */
 } CellularAutomaton;
 void printAutomaton(const CellularAutomaton* automaton, FILE* fd);
