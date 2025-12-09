@@ -21,13 +21,20 @@ typedef enum VegType {
 } VegType;
 const char* cellTypeToStr(VegType type);
 
+typedef enum WindSpeed {
+    WIND_NONE,
+    WIND_SLOW,
+    WIND_MODERATE,
+    WIND_FAST,
+    WIND_EXTREME,
+} WindSpeed;
+
 typedef struct Cell {
     float moisture;
     float fuel;
     float heat;
     VegType type;
     CellState state;
-    //CellType type;
 } Cell;
 void printCell(const Cell* cell, FILE* fd);
 
@@ -41,7 +48,7 @@ typedef struct CellularAutomaton {
     size_t num_rows;
     int windX;
     int windY;
-    float wind_speed;
+    WindSpeed speed;
     /* other stuff maybe */
 } CellularAutomaton;
 void printAutomaton(const CellularAutomaton* automaton, FILE* fd);

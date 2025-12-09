@@ -20,15 +20,8 @@ float wind_effect_table[5][5] = {
 };
 
 // Giving wind speed an index so we can chose a value from the table.
-int wind_speed_index(float speed) {
-    switch ((int)speed) {
-        case 10: return 0;
-        case 30: return 1;
-        case 50: return 2;
-        case 70: return 3;
-        case 90: return 4;
-        default: return 0;
-    }
+int wind_speed_index(WindSpeed speed) {
+    return (int)speed;
 }
 
 // giving wind direction an index so we can choose a value from the table.
@@ -117,7 +110,7 @@ void spreadToNeighbors(const CellularAutomaton* automaton, size_t row, size_t co
 
             // Getting an index for what direction the wind is blowing (1,1) = 7 = southeast
             int wind_dir = dir_from_vec(automaton->windX, automaton->windY);
-            int w_idx = wind_speed_index(automaton->wind_speed);
+            int w_idx = wind_speed_index(automaton->speed);
 
             // finding out what direction the neighboring cell is in compared to the burning cell
             int neighbour_dir = dir_from_vec(dx, dy);
