@@ -1,10 +1,22 @@
+#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
+#include <time.h>
+#include <unistd.h>
 #include <stdlib.h>
+#include "SDL3/SDL_events.h"
+#include "SDL3/SDL_init.h"
+#include "SDL3/SDL_stdinc.h"
+#include "SDL3/SDL_surface.h"
+#include "SDL3/SDL_video.h"
 #include "cell.h"
+#include "display.h"
 #include "input.h"
 #include "direct_spread.h"
 #include "spotting_spread.h"
 #include "burnout_cell.h"
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 
 int main(int argc, char const* const* argv) {
     if (argc != 2) {
@@ -14,14 +26,48 @@ int main(int argc, char const* const* argv) {
 
     const char* file_path = argv[1];
     const CellularAutomaton automaton = readInitialState(file_path);
+    if (automaton.num_rows == 0) {
+        fputs("We failed creating the automaton from the input file :(\n", stderr);
+        return EXIT_FAILURE;
+    }
 
+    SDLState state = initSDL(16 * 80, 9 * 80);
+    if (state.win == nullptr) {
+        return 1;
+    }
 
     int step;
-    printf("How many times do you wish for the simulation to run?");
-    scanf("%d" ,&step);
-    
 
-    for (int i = 0; i < step; i++) {
+    fprintf(stderr, "How many times do you wish for the simulation to run?");
+    if (scanf("%d" ,&step) < 0) {
+        fputs("We failed reading... whut.. :(\n", stderr);
+        return EXIT_FAILURE;
+    }
+
+    bool running = true;
+    int i = 0;
+    while (running) {
+        // handle SDL input
+        SDL_Event event;
+        SDL_zero(event);
+
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT)
+                running = false;
+        }
+
+        if (i >= step)
+            continue;
+
+
+        const struct timespec ts = {
+            .tv_nsec = 100000000,
+        };
+
+        nanosleep(&ts, nullptr);
+
+        display(&state, &automaton);
+            
         // Spread fire
         directSpread(&automaton);
 
@@ -30,7 +76,13 @@ int main(int argc, char const* const* argv) {
 
         // Burn cells based on heal / fuel left
         burnoutCells(&automaton);
+
+        i++;
     }
+
+    SDL_DestroySurface(state.surf);
+    SDL_DestroyWindow(state.win);
+    SDL_Quit();
     return 0;
 
 }

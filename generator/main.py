@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from enum import Enum
 from io import BufferedReader, BufferedWriter, FileIO
 from typing import Callable, Self, TypeVar, final, TYPE_CHECKING, overload, override
@@ -37,13 +37,13 @@ def iota(end: int) -> list[int]:
 
 def on_press_key(event) -> None:
     global shift_held
-    if event.keycode == 50:
+    if event.keycode == 50 or event.keycode == 943782142:
         shift_held = True
 
 
 def on_release_key(event) -> None:
     global shift_held
-    if event.keycode == 50:
+    if event.keycode == 50 or event.keycode == 943782142:
         shift_held = False
 
 
