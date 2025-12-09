@@ -37,7 +37,8 @@ int main(int argc, char const* const* argv) {
     }
 
     int step;
-    fprintf(stderr, "Indtast hvor mange gange simulationen skal køre: ");
+
+    fprintf(stderr, "How many times do you wish for the simulation to run?");
     if (scanf("%d" ,&step) < 0) {
         fputs("We failed reading... whut.. :(\n", stderr);
         return EXIT_FAILURE;
