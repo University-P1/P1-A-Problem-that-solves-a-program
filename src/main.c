@@ -1,5 +1,5 @@
-#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -14,18 +14,25 @@
 #include "direct_spread.h"
 #include "spotting_spread.h"
 #include "burnout_cell.h"
+#include "wchar.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+time_t time_diff(struct timeval *start, struct timeval *end) {
+  return (end->tv_sec - start->tv_sec) * 1000000l + (end->tv_usec - start->tv_usec);
+}
+
 int main(int argc, char const* const* argv) {
+    srand((unsigned int)time(nullptr));
+
     if (argc != 2) {
         fputs("ERROR: Too many or too little arguments", stderr);
         exit(EXIT_FAILURE);
     }
 
     const char* file_path = argv[1];
-    const CellularAutomaton automaton = readInitialState(file_path);
+    CellularAutomaton automaton = readInitialState(file_path);
     if (automaton.num_rows == 0) {
         fputs("We failed creating the automaton from the input file :(\n", stderr);
         return EXIT_FAILURE;
@@ -46,6 +53,8 @@ int main(int argc, char const* const* argv) {
 
     bool running = true;
     int i = 0;
+    struct timeval begin;
+    gettimeofday(&begin, NULL);
     while (running) {
         // handle SDL input
         SDL_Event event;
@@ -59,17 +68,18 @@ int main(int argc, char const* const* argv) {
         if (i >= step)
             continue;
 
+        struct timeval end;
+        gettimeofday(&end, NULL);
+        if (time_diff(&begin, &end) < 250000l)
+            continue;
 
-        const struct timespec ts = {
-            .tv_nsec = 100000000,
-        };
+        gettimeofday(&begin, NULL);
 
-        nanosleep(&ts, nullptr);
 
         display(&state, &automaton);
             
         // Spread fire
-        directSpread(&automaton);
+        automaton = directSpread(&automaton);
 
         // Spread fire via spotting
         spottingSpread(&automaton);
