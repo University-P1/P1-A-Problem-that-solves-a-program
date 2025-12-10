@@ -1,5 +1,8 @@
 #include "cell.h"
+#include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 const char* cellTypeToStr(VegType type) {
     switch (type) {
@@ -71,4 +74,34 @@ static void printCellProc(const CellularAutomaton* automaton, size_t row, size_t
 
 void printAutomaton(const CellularAutomaton* automaton, FILE *fd) {
     forEachCell(automaton, printCellProc, fd);
+}
+
+CellularAutomaton cloneAutomaton(const CellularAutomaton* orig) {
+    const int windX = orig->windX;
+    const int windY = orig->windY;
+    const WindSpeed speed = orig->speed;
+    const size_t num_rows = orig->num_rows;
+    assert(num_rows > 0 && "Automaton was empty");
+
+    const size_t num_columns = orig->rows[0].count;
+
+    CellArray* out_rows = malloc(num_rows * sizeof(CellArray));
+    for (size_t row = 0; row < num_rows; row++) {
+        const size_t cell_bytes = num_columns * sizeof(Cell);
+        Cell* out_cells = malloc(cell_bytes);
+        memcpy(out_cells, orig->rows[row].elements, cell_bytes);
+
+        out_rows[row] = (CellArray) {
+            .count = num_columns,
+            .elements = out_cells,
+        };
+    }
+
+    return (CellularAutomaton) {
+        .windX = windX,
+        .windY = windY,
+        .speed = speed,
+        .num_rows = num_rows,
+        .rows = out_rows,
+    };
 }

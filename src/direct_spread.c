@@ -8,7 +8,6 @@
 
 void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* out, size_t row, size_t col);
 float chanceToSpread(const Cell* src, const Cell* dst, float a_w);
-CellularAutomaton cloneAutomaton(const CellularAutomaton* automaton);
 
 float wind_effect_table[WIND_LAST][5] = {
     // Chatgpt read the graph, check if they are correct.
@@ -34,7 +33,7 @@ int windDifferenceIndex(int ax, int ay, int bx, int by) {
 }
 
 /// Modifies the Cellular Automaton by spreading the fire between cells
-void directSpread(const CellularAutomaton* automaton) {
+CellularAutomaton directSpread(const CellularAutomaton* automaton) {
     CellularAutomaton write_automaton = cloneAutomaton(automaton);
     // we iterate through our grid of cells
     for (size_t row = 0; row < automaton->num_rows; row++ ) {
@@ -47,19 +46,19 @@ void directSpread(const CellularAutomaton* automaton) {
             // We know the cell is on fire
             // We are looping over neighbouring cells to check if they are going to catch fire
             spreadToNeighbors(automaton, &write_automaton, row, col);
-
         }
-
     }
+
+    return write_automaton;
 }
 
 void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* out, size_t row, size_t col) {
     // input validation
     assert(row < automaton->num_rows && "out of bounds");
-    CellArray cells = automaton->rows[row];
+    const CellArray cells = automaton->rows[row];
 
     assert(col < cells.count && "out of bounds");
-    Cell spreading_cell = cells.elements[col];
+    const Cell spreading_cell = cells.elements[col];
 
     // Looping over neighbouring cells
     for (int neighbour_row = (int)row - 1; neighbour_row <= (int)row + 1; neighbour_row++ ) {
@@ -70,9 +69,9 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
         if (neighbour_row >= (int)automaton->num_rows) {
             break;
         }
-        CellArray neighbour_cell_arr = automaton->rows[neighbour_row];
+        const CellArray neighbour_cell_arr = automaton->rows[neighbour_row];
 
-        CellArray output_cell_arr = out->rows[neighbour_row];
+        const CellArray output_cell_arr = out->rows[neighbour_row];
 
         for (int neighbour_col = (int)col - 1; neighbour_col <= (int)col + 1; neighbour_col++) {
             // if column is out of bounds = skip
@@ -82,9 +81,8 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
             if (neighbour_col >= (int)cells.count) {
                 break;
             }
-            Cell* neighbouring_cell = &neighbour_cell_arr.elements[neighbour_col];
+            const Cell* neighbouring_cell = &neighbour_cell_arr.elements[neighbour_col];
 
-            Cell* output_cell = &output_cell_arr.elements[neighbour_col];
 
             if (neighbouring_cell->state != CELLSTATE_NORMAL) {
                 continue;
@@ -110,7 +108,8 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
             }
 
             // The fire spreads to the cell :)
-             output_cell->state= CELLSTATE_ONFIRE;
+            Cell* output_cell = &output_cell_arr.elements[neighbour_col];
+            output_cell->state = CELLSTATE_ONFIRE;
         }
 
     }

@@ -46,7 +46,7 @@ typedef struct CellArray {
 } CellArray;
 
 typedef struct CellularAutomaton {
-    CellArray* const rows;
+    CellArray* rows;
     size_t num_rows;
     int windX;
     int windY;
@@ -57,3 +57,5 @@ void printAutomaton(const CellularAutomaton* automaton, FILE* fd);
 
 typedef void (*cellProc)(const CellularAutomaton* automaton, size_t row, size_t col, void* userdata);
 void forEachCell(const CellularAutomaton* automaton, cellProc fn, void* userdata);
+
+CellularAutomaton cloneAutomaton(const CellularAutomaton* automaton);

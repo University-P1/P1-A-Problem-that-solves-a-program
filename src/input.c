@@ -246,6 +246,20 @@ CellularAutomaton readInitialState(const char* path) {
             goto err_close_file;
         }
 
+        // Done parsing the cell!!!
+        if (fuel > 100) {
+            fprintf(stderr, "Fuel at cell %zu, was set to over 100!\n", cell_num);
+            goto err_close_file;
+        }
+        if (heat > 100) {
+            fprintf(stderr, "Heat at cell %zu, was set to over 100!\n", cell_num);
+            goto err_close_file;
+        }
+        if (moisture > 100) {
+            fprintf(stderr, "Moisture at cell %zu, was set to over 100!\n", cell_num);
+            goto err_close_file;
+        }
+
         // convert numbers to floats
         const float f = (float)fuel / 100.f;
         const float h = (float)heat / 100.f;
