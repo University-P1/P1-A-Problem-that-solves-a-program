@@ -5,7 +5,7 @@ from typing import Callable, Self, TypeVar, final, TYPE_CHECKING, overload, over
 import customtkinter as tk
 from spinbox import Spinbox
 
-from sys import argv
+from sys import argv, stdout
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparisonT
@@ -529,14 +529,12 @@ class App(tk.CTk):
 
 
     def export(self) -> None:
-        with BufferedWriter(FileIO("./output.cellgrid", mode="wb")) as writer:
-            for row in self.cellgrid.cells:
-                writer.writelines([(cell.serialize() + "\n").encode() for cell in row])
+        writer = stdout.buffer
+        for row in self.cellgrid.cells:
+            _ = writer.writelines([(cell.serialize() + "\n").encode() for cell in row])
 
-            writer.flush()
+        _ = writer.flush()
 
-
-        print("Export complete!")
         exit(0)
 
 
