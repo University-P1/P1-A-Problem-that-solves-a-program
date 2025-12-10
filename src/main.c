@@ -68,6 +68,7 @@ int main(int argc, char const* const* argv) {
         if (i >= step)
             continue;
 
+
         struct timeval end;
         gettimeofday(&end, NULL);
         if (time_diff(&begin, &end) < 250000l)

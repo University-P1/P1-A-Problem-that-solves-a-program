@@ -10,7 +10,7 @@ class Spinbox(tk.CTkFrame):
                  width: int = 100,
                  height: int = 32,
                  step_size: int = 3,
-                 command: Callable[[float], None] | None = None,
+                 command: Callable[[int], None] | None = None,
                  **kwargs):
         super().__init__(*args, width=width, height=height, **kwargs)
 
