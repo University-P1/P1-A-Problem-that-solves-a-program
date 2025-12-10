@@ -34,8 +34,8 @@ inline size_t vegTypeIndex(VegType type) {
         return 4;
     case VEG_NOTFIREPRONE:
         return 5;
-    case VEG_LAST:
-        return 5;
+    default:
+        return 0;
     }
 }
 
