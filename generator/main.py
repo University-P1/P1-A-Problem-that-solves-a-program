@@ -43,7 +43,7 @@ def on_press_key(event) -> None:
 
 def on_release_key(event) -> None:
     global shift_held
-    if event.keycode == 50 or event.keycode == 943782142:
+    if event.keycode == 50 or event.keycode == 939587838:
         shift_held = False
 
 
