@@ -1,4 +1,5 @@
 #include "direct_spread.h"
+#include "cell.h"
 
 #include <assert.h>
 #include <math.h>
@@ -129,7 +130,7 @@ float chanceToSpread(const Cell* src, const Cell* dst, float a_w) {
     };
 
     // nominal fire probability
-    float p_n = nominals[src->type][dst->type];
+    float p_n = nominals[vegTypeIndex(src->type)][vegTypeIndex(dst->type)];
 
     // Fine fuel moisture content, between 0 and 1, the higher the drier.
     float e_m = 1 - dst->moisture;

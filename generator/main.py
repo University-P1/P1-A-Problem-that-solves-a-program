@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 from enum import Enum
-from io import BufferedReader, BufferedWriter, FileIO
-from typing import Callable, Self, TypeVar, final, TYPE_CHECKING, overload, override
+from io import BufferedReader
+from typing import Callable, TypeVar, final, TYPE_CHECKING, override
 import customtkinter as tk
 from spinbox import Spinbox
 
-from sys import argv, stdout
+from sys import argv, stdout, stderr
 
 if TYPE_CHECKING:
     from _typeshed import SupportsRichComparisonT
@@ -24,9 +24,6 @@ class ViewMode(Enum):
     STATE = 0,
     TYPE = 1,
     MOISTURE = 2,
-    FUEL = 3,
-    HEAT = 4,
-    COMBINED = 5,
 
 
 viewmode: ViewMode = ViewMode.STATE
@@ -69,7 +66,7 @@ def veg_type_from_str(input: str) -> VegType:
         if input == type.get():
             return type
 
-    print(f"Invalid VegType string: {input}")
+    _ = stderr.write(f"Invalid VegType string: {input}")
     exit(1)
 
 
@@ -87,7 +84,7 @@ def cell_state_from_str(input: str) -> CellState:
         if input == state.get():
             return state
 
-    print(f"Invalid CellState string: {input}")
+    _ = stderr.write(f"Invalid CellState string: {input}")
     exit(1)
 
 
@@ -119,9 +116,7 @@ class Cell(tk.CTkButton):
 
         self.type: VegType = VegType.NOTFIREPRONE
         self.state: CellState = CellState.NORMAL
-        self.moisture: int = 0
-        self.fuel: int = 0
-        self.heat: int = 0
+        self.moisture: int = 80
 
     def callback(self) -> None:
         self.command(self.x, self.y)
@@ -143,17 +138,12 @@ class Cell(tk.CTkButton):
                 .state = {self.state}
                 .type = {self.type}
                 .moisture = {self.moisture}
-                .heat = {self.heat}
-                .fuel = {self.fuel}
             }}
         """
 
 
     def update_cell(self) -> None:
         col = None
-        moist_hex = "00"
-        fuel_hex = "00"
-        heat_hex = "00"
         match viewmode:
             case ViewMode.STATE:
                 match self.state:
@@ -185,24 +175,15 @@ class Cell(tk.CTkButton):
                         col = "grey"
 
             case ViewMode.MOISTURE:
-                moist_hex = format(round(self.moisture / 100 * 255), "x")
+                moist_hex = f"{self.moisture:x}"
+                while len(moist_hex) < 2:
+                    moist_hex = "0" + moist_hex
 
-            case ViewMode.FUEL:
-                fuel_hex = format(round(self.fuel / 100 * 255), "x")
+                _ = stderr.write(f"moist_val: {moist_hex}\n")
 
-            case ViewMode.HEAT:
-                heat_hex = format(round(self.heat / 100 * 255), "x")
+                col = f"#1111" + moist_hex
+                _ = stderr.write(f"col: {col}\n")
 
-            case ViewMode.COMBINED:
-                moist_hex = format(round(self.moisture / 100 * 255), "x")
-                fuel_hex = format(round(self.fuel / 100 * 255), "x")
-                heat_hex = format(round(self.heat / 100 * 255), "x")
-
-
-        if col is None:
-            fixHex: Callable[[str], str] = lambda h: "0" + h if len(h) <= 1 else h
-
-            col = "#{}{}{}".format(fixHex(heat_hex), fixHex(fuel_hex), fixHex(moist_hex))
 
         self.configure(fg_color=col)
 
@@ -214,20 +195,13 @@ class Cell(tk.CTkButton):
 
     def set_moisture(self, moist: int) -> None:
         self.moisture = clamp(moist, 0, 100)
-
-    def set_fuel(self, fuel: int) -> None:
-        self.fuel = clamp(fuel, 0, 100)
-
-    def set_heat(self, heat: int) -> None:
-        self.heat = clamp(heat, 0, 100)
+        _ = stderr.write(f"moisture: {self.moisture}\n")
 
 
     def serialize(self) -> str:
         out: str = ""
         out += self.state.get() + ","
         out += self.type.get() + ","
-        out += str(self.fuel) + ","
-        out += str(self.heat) + ","
         out += str(self.moisture) + ","
 
         return out
@@ -237,9 +211,7 @@ class Cell(tk.CTkButton):
         
         self.state = cell_state_from_str(data[0].decode())
         self.type = veg_type_from_str(data[1].decode())
-        self.fuel = int(data[2])
-        self.heat = int(data[3])
-        self.moisture = int(data[4])
+        self.moisture = int(data[2])
 
 
 @final
@@ -385,26 +357,6 @@ class SettingsFrame(tk.CTkFrame):
         self.moisture_meter.grid(row=1, column=0, pady=10, padx=10)
         self.moisture_meter.set(0)
 
-        text = tk.CTkEntry(self.number_settings, height=32, justify="center")
-        text.grid(row=2, column=0, pady=(0,10))
-        text.insert(0, "fuel")
-        text.configure(state="disabled")
-
-        self.fuel_meter = Spinbox(self.number_settings, command=self.fuel_callback)
-        self.fuel_meter.grid(row=3, column=0, pady=10, padx=10)
-        self.fuel_meter.set(0)
-
-        text = tk.CTkEntry(self.number_settings, height=32, justify="center")
-        text.grid(row=4, column=0, pady=(0,10))
-        text.insert(0, "heat")
-        text.configure(state="disabled")
-
-        self.heat_meter = Spinbox(self.number_settings, command=self.heat_callback)
-        self.heat_meter.grid(row=5, column=0, pady=10, padx=10)
-        self.heat_meter.set(0)
-
-
-
         self.onfire = tk.CTkButton(self, text="onfire", command=lambda: self.set_selected_cellstate(CellState.ONFIRE), width=100, height=100)
         self.onfire.grid(row=1, column=0, padx=10, pady=10)
 
@@ -421,19 +373,15 @@ class SettingsFrame(tk.CTkFrame):
 
         if len(selected) > 1:
             self.moisture_meter.set(0)
-            self.fuel_meter.set(0)
-            self.heat_meter.set(0)
         else:
             self.moisture_meter.set(selected[0].moisture)
-            self.fuel_meter.set(selected[0].fuel)
-            self.heat_meter.set(selected[0].heat)
 
 
     def set_selected_cellstate(self, state: CellState) -> None:
         self.cellgrid.for_all_selected(lambda cell: cell.set_state(state))
 
 
-    def moisture_callback(self, moist: float) -> None:
+    def moisture_callback(self, moist: int) -> None:
         # If we have multiple cells selected at once, we increment by the amount
         if self.cellgrid.multi_select():
             self.cellgrid.for_all_selected(lambda cell: cell.set_moisture(cell.moisture + moist))
@@ -441,26 +389,6 @@ class SettingsFrame(tk.CTkFrame):
         # Only 1 selected, we just set the value directly:
         else:
             self.cellgrid.for_all_selected(lambda cell: cell.set_moisture(moist))
-
-
-    def fuel_callback(self, fuel: float) -> None:
-        # If we have multiple cells selected at once, we increment by the amount
-        if self.cellgrid.multi_select():
-            self.cellgrid.for_all_selected(lambda cell: cell.set_fuel(cell.fuel + fuel))
-            self.fuel_meter.set(0) # Reset the value, so we don't increment twice
-        # Only 1 selected, we just set the value directly:
-        else:
-            self.cellgrid.for_all_selected(lambda cell: cell.set_fuel(fuel))
-
-
-    def heat_callback(self, heat: float) -> None:
-        # If we have multiple cells selected at once, we increment by the amount
-        if self.cellgrid.multi_select():
-            self.cellgrid.for_all_selected(lambda cell: cell.set_heat(cell.heat + heat))
-            self.heat_meter.set(0) # Reset the value, so we don't increment twice
-        # Only 1 selected, we just set the value directly:
-        else:
-            self.cellgrid.for_all_selected(lambda cell: cell.set_heat(heat))
 
 
 @final
@@ -504,7 +432,7 @@ class App(tk.CTk):
         try:
             size = (int(argv[1]), int(argv[2])) if len(argv) >= 3 else (50, 50)
         except:
-            print("Invalid parameters!!")
+            _ = stderr.write("Invalid parameters!!")
             exit(1)
 
         in_file = open(argv[3], mode="rb") if len(argv) == 4 else None

@@ -44,14 +44,10 @@ void printCell(const Cell* cell, FILE* fd) {
     fprintf(fd, 
             "(Cell) {\n"
                 "\t.moisture = %f\n"
-                "\t.fuel = %f\n"
-                "\t.heat = %f\n"
                 "\t.state = %s\n"
                 "\t.type = %s\n"
             "}\n",
             cell->moisture,
-            cell->fuel,
-            cell->heat,
             cellStateToStr(cell->state),
             cellTypeToStr(cell->type)
     );

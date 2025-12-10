@@ -2,24 +2,42 @@
 #include <stdio.h>
 
 typedef enum CellState {
-    CELLSTATE_NORMAL,
-    CELLSTATE_ONFIRE,
-    CELLSTATE_BURNT,
+    CELLSTATE_NORMAL = 'N',
+    CELLSTATE_ONFIRE = 'F',
+    CELLSTATE_BURNT = 'O',
 } CellState;
 const char* cellStateToStr(CellState state);
 
 
 typedef enum VegType {
-    VEG_BROADLEAVES,
-    VEG_SHRUBS,
-    VEG_GRASSLAND,
-    VEG_FIREPRONE,
-    VEG_AGROFORESTRY,
-    VEG_NOTFIREPRONE,
+    VEG_BROADLEAVES = 'L',
+    VEG_SHRUBS = 'S',
+    VEG_GRASSLAND = 'G',
+    VEG_FIREPRONE = 'F',
+    VEG_AGROFORESTRY = 'A',
+    VEG_NOTFIREPRONE = 'N',
 
-    VEG_LAST,
+    VEG_LAST = 6,
 } VegType;
 const char* cellTypeToStr(VegType type);
+inline size_t vegTypeIndex(VegType type) {
+    switch (type) {
+    case VEG_BROADLEAVES:
+        return 0;
+    case VEG_SHRUBS:
+        return 1;
+    case VEG_GRASSLAND:
+        return 2;
+    case VEG_FIREPRONE:
+        return 3;
+    case VEG_AGROFORESTRY:
+        return 4;
+    case VEG_NOTFIREPRONE:
+        return 5;
+    case VEG_LAST:
+        return 5;
+    }
+}
 
 typedef enum WindSpeed {
     WIND_NONE,
@@ -33,8 +51,7 @@ typedef enum WindSpeed {
 
 typedef struct Cell {
     float moisture;
-    float fuel;
-    float heat;
+    size_t on_fire_counter;
     VegType type;
     CellState state;
 } Cell;

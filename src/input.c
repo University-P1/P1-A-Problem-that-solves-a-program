@@ -133,7 +133,6 @@ CellularAutomaton readInitialState(const char* path) {
         .speed = (WindSpeed)speed,
     };
 
-
     // Parse the cells
     char line[128];
     size_t cell_num = 0;
@@ -152,7 +151,7 @@ CellularAutomaton readInitialState(const char* path) {
         }
 
         // Line too short
-        if (line_len < strlen("N,T,0,0,0,\n")) {
+        if (line_len < strlen("N,T,0,\n")) {
             fputs("Line too short", stderr);
             goto err_close_file;
         }
@@ -160,23 +159,14 @@ CellularAutomaton readInitialState(const char* path) {
         // parse state
         CellState state;
         switch (line[idx]) {
-        // Normal
         case 'N':
-            state = CELLSTATE_NORMAL;
-            break;
-
-        // on Fire
         case 'F':
-            state = CELLSTATE_ONFIRE;
-            break;
-
-        // Out
         case 'O':
-            state = CELLSTATE_BURNT;
+            state = (CellState)line[idx];
             break;
 
         default:
-            fprintf(stderr, "Invalid cell state at cell number: %zu\n", cell_num);
+            fprintf(stderr, "Invalid cell state \"%c\" at cell number: %zu\n", line[idx], cell_num);
             goto err_close_file;
         }
         idx++;
@@ -190,25 +180,15 @@ CellularAutomaton readInitialState(const char* path) {
         VegType type;
         switch (line[idx]) {
         case 'B':
-            type = VEG_BROADLEAVES;
-            break;
         case 'S':
-            type = VEG_SHRUBS;
-            break;
         case 'G':
-            type = VEG_GRASSLAND;
-            break;
         case 'F':
-            type = VEG_FIREPRONE;
-            break;
         case 'A':
-            type = VEG_AGROFORESTRY;
-            break;
         case 'N':
-            type = VEG_NOTFIREPRONE;
+            type = (VegType)line[idx];
             break;
         default: 
-            fprintf(stderr, "Invalid cell type at cell number: %zu\n", cell_num);
+            fprintf(stderr, "Invalid cell type \"%c\" at cell number: %zu\n", line[idx], cell_num);
             goto err_close_file;
         }
         idx++;
@@ -219,11 +199,9 @@ CellularAutomaton readInitialState(const char* path) {
         idx++;
 
         // parse number values
-        int fuel;
-        int heat;
         int moisture;
 
-        int* value_addresses[3] = {&fuel, &heat, &moisture};
+        int* value_addresses[] = {&moisture};
         const size_t num_values = sizeof(value_addresses) / sizeof(value_addresses[0]);
 
         const size_t bytes_read = parseNumberValues(line + idx, value_addresses, num_values);
@@ -233,26 +211,8 @@ CellularAutomaton readInitialState(const char* path) {
         }
 
         // Done parsing the cell!!!
-        if (fuel < 0) {
-            fprintf(stderr, "Fuel at cell %zu, was set to a negative value!\n", cell_num);
-            goto err_close_file;
-        }
-        if (heat < 0) {
-            fprintf(stderr, "Heat at cell %zu, was set to a negative value!\n", cell_num);
-            goto err_close_file;
-        }
         if (moisture < 0) {
             fprintf(stderr, "Moisture at cell %zu, was set to a negative value!\n", cell_num);
-            goto err_close_file;
-        }
-
-        // Done parsing the cell!!!
-        if (fuel > 100) {
-            fprintf(stderr, "Fuel at cell %zu, was set to over 100!\n", cell_num);
-            goto err_close_file;
-        }
-        if (heat > 100) {
-            fprintf(stderr, "Heat at cell %zu, was set to over 100!\n", cell_num);
             goto err_close_file;
         }
         if (moisture > 100) {
@@ -261,15 +221,12 @@ CellularAutomaton readInitialState(const char* path) {
         }
 
         // convert numbers to floats
-        const float f = (float)fuel / 100.f;
-        const float h = (float)heat / 100.f;
         const float m = (float)moisture / 100.f;
 
         cells[cell_num] = (Cell){
             .state = state,
             .type = type,
-            .fuel = f,
-            .heat = h,
+            .on_fire_counter = 0,
             .moisture = m,
         };
     }
