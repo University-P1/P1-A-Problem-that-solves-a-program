@@ -84,6 +84,8 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
             }
             const Cell* neighbouring_cell = &neighbour_cell_arr.elements[neighbour_col];
 
+            Cell* output_cell = &output_cell_arr.elements[neighbour_col];
+
 
             if (neighbouring_cell->state != CELLSTATE_NORMAL) {
                 continue;
@@ -109,7 +111,6 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
             }
 
             // The fire spreads to the cell :)
-            Cell* output_cell = &output_cell_arr.elements[neighbour_col];
             output_cell->state = CELLSTATE_ONFIRE;
         }
 
@@ -130,7 +131,7 @@ float chanceToSpread(const Cell* src, const Cell* dst, float a_w) {
     };
 
     // nominal fire probability
-    float p_n = nominals[vegTypeIndex(src->type)][vegTypeIndex(dst->type)];
+    float p_n = nominals[vegTypeIndex(dst->type)][vegTypeIndex(src->type)];
 
     // Fine fuel moisture content, between 0 and 1, the higher the drier.
     float e_m = 1 - dst->moisture;
