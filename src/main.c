@@ -24,6 +24,7 @@ time_t time_diff(struct timeval *start, struct timeval *end) {
 }
 
 int main(int argc, char const* const* argv) {
+    // Random seed for the random function
     srand((unsigned int)time(nullptr));
 
     if (argc != 2) {
@@ -76,9 +77,8 @@ int main(int argc, char const* const* argv) {
 
         gettimeofday(&begin, NULL);
 
-
         display(&state, &automaton);
-            
+
         // Spread fire
         automaton = directSpread(&automaton);
 

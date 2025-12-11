@@ -179,11 +179,7 @@ class Cell(tk.CTkButton):
                 while len(moist_hex) < 2:
                     moist_hex = "0" + moist_hex
 
-                _ = stderr.write(f"moist_val: {moist_hex}\n")
-
                 col = f"#1111" + moist_hex
-                _ = stderr.write(f"col: {col}\n")
-
 
         self.configure(fg_color=col)
 
@@ -195,7 +191,6 @@ class Cell(tk.CTkButton):
 
     def set_moisture(self, moist: int) -> None:
         self.moisture = clamp(moist, 0, 100)
-        _ = stderr.write(f"moisture: {self.moisture}\n")
 
 
     def serialize(self) -> str:
