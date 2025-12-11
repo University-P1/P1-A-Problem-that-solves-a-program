@@ -1,12 +1,11 @@
 #include "display.h"
-#include "SDL3/SDL.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_log.h"
-#include "SDL3/SDL_main.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3/SDL_video.h"
 #include <SDL3/SDL_rect.h>
+#include <assert.h>
 #include <stdlib.h>
 #include "cell.h"
 
@@ -40,22 +39,41 @@ void drawCell(const CellularAutomaton* automaton, size_t row, size_t col, void* 
         .h = cell_height,
     };
 
-    Uint8 r = 0;
-    Uint8 g = 0;
-    Uint8 b = 0;
+    typedef struct Color {
+        Uint8 r;
+        Uint8 g;
+        Uint8 b;
+    } Colour;
+    Colour c = {0, 0, 0};
 
-    switch (cell.state) {
-    case CELLSTATE_NORMAL:
-        g = 255;
-        break;
-    case CELLSTATE_ONFIRE:
-        r = 255;
-        break;
-    case CELLSTATE_BURNT:
-      break;
+    if (cell.state == CELLSTATE_ONFIRE) {
+        c = (Colour){255, 0, 0};
+    } else if (cell.state == CELLSTATE_NORMAL) {
+        switch (cell.type) {
+        case VEG_BROADLEAVES:
+            c = (Colour){0, 0, 255}; // blue
+            break;
+        case VEG_SHRUBS:
+            c = (Colour){0, 100, 0}; // dark green
+            break;
+        case VEG_GRASSLAND:
+            c = (Colour){144, 238, 144}; // light green
+            break;
+        case VEG_FIREPRONE:
+            c = (Colour){235, 65, 65}; // red
+            break;
+        case VEG_AGROFORESTRY:
+            c = (Colour){255, 255, 0}; // yellow
+            break;
+        case VEG_NOTFIREPRONE:
+            c = (Colour){138, 138, 138}; // grey
+            break;
+        default:
+            assert(false && "Invalid vegtype");
+        }
     }
 
-    SDL_FillSurfaceRect(state->surf, &rect, SDL_MapSurfaceRGB(state->surf, r, g, b));
+    SDL_FillSurfaceRect(state->surf, &rect, SDL_MapSurfaceRGB(state->surf, c.r, c.g, c.b));
 }
 
 void display(const SDLState* state, const CellularAutomaton* automaton) {
@@ -63,16 +81,6 @@ void display(const SDLState* state, const CellularAutomaton* automaton) {
 
     // Draw the cells
     forEachCell(automaton, drawCell, (void*)state);
-    //drawCell(automaton, 0, 0, (void*)state);
-
-    // SDL_Rect rect = {
-    //     .x = 0,
-    //     .y = 0,
-    //     .w = 100,
-    //     .h = 100,
-    // };
-    //
-    // SDL_FillSurfaceRect(state->surf, &rect, SDL_MapSurfaceRGB(state->surf, 255, 0, 0));
 
     SDL_UpdateWindowSurface(state->win);
 }

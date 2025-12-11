@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 #include <stdio.h>
 
 typedef enum CellState {
@@ -10,7 +11,7 @@ const char* cellStateToStr(CellState state);
 
 
 typedef enum VegType {
-    VEG_BROADLEAVES = 'L',
+    VEG_BROADLEAVES = 'B',
     VEG_SHRUBS = 'S',
     VEG_GRASSLAND = 'G',
     VEG_FIREPRONE = 'F',
@@ -35,7 +36,7 @@ inline size_t vegTypeIndex(VegType type) {
     case VEG_NOTFIREPRONE:
         return 5;
     default:
-        return 0;
+        assert(false && "Invalid Vegtype!!!");
     }
 }
 

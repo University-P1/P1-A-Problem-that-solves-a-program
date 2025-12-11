@@ -200,11 +200,9 @@ CellularAutomaton readInitialState(const char* path) {
 
         // parse number values
         int moisture;
+        int* const vals[] = {&moisture};
 
-        int* value_addresses[] = {&moisture};
-        const size_t num_values = sizeof(value_addresses) / sizeof(value_addresses[0]);
-
-        const size_t bytes_read = parseNumberValues(line + idx, value_addresses, num_values);
+        const size_t bytes_read = parseNumberValues(line + idx, vals, 1);
         if (bytes_read == 0) {
             fprintf(stderr, "Error reading number values at cell number: %zu\n", cell_num );
             goto err_close_file;
