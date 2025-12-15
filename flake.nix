@@ -27,6 +27,8 @@
           ]))
           llvmPackages_latest.lldb
 
+          llvmPackages_latest.llvm
+
           wayland
           wayland-scanner
           wayland-protocols

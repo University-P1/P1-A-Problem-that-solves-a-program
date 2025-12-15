@@ -4,3 +4,4 @@
 /// Modifies the Cellular Automaton by spreading the fire between cells
 CellularAutomaton directSpread(const CellularAutomaton* automaton);
 int windDifferenceIndex(int ax, int ay, int bx, int by);
+float chanceToSpread(const Cell* src, const Cell* dst, float a_w);

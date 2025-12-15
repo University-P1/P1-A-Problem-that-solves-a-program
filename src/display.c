@@ -43,30 +43,30 @@ void drawCell(const CellularAutomaton* automaton, size_t row, size_t col, void* 
         Uint8 r;
         Uint8 g;
         Uint8 b;
-    } Colour;
-    Colour c = {0, 0, 0};
+    } Color;
+    Color c = {0, 0, 0};
 
     if (cell.state == CELLSTATE_ONFIRE) {
-        c = (Colour){255, 0, 0};
+        c = (Color){255, 0, 0};
     } else if (cell.state == CELLSTATE_NORMAL) {
         switch (cell.type) {
         case VEG_BROADLEAVES:
-            c = (Colour){0, 0, 255}; // blue
+            c = (Color){0, 0, 255}; // blue
             break;
         case VEG_SHRUBS:
-            c = (Colour){0, 100, 0}; // dark green
+            c = (Color){0, 100, 0}; // dark green
             break;
         case VEG_GRASSLAND:
-            c = (Colour){144, 238, 144}; // light green
+            c = (Color){144, 238, 144}; // light green
             break;
         case VEG_FIREPRONE:
-            c = (Colour){235, 65, 65}; // red
+            c = (Color){235, 65, 65}; // red
             break;
         case VEG_AGROFORESTRY:
-            c = (Colour){255, 255, 0}; // yellow
+            c = (Color){255, 255, 0}; // yellow
             break;
         case VEG_NOTFIREPRONE:
-            c = (Colour){138, 138, 138}; // grey
+            c = (Color){138, 138, 138}; // grey
             break;
         default:
             assert(false && "Invalid vegtype");
