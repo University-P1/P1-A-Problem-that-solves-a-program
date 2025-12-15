@@ -72,7 +72,7 @@ int main(int argc, char const* const* argv) {
 
         struct timeval end;
         gettimeofday(&end, NULL);
-        if (time_diff(&begin, &end) < 250000l)
+        if (time_diff(&begin, &end) < 100000l)
             continue;
 
         gettimeofday(&begin, NULL);
