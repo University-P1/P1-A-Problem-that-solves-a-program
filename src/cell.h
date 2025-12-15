@@ -21,7 +21,7 @@ typedef enum VegType {
     VEG_LAST = 6,
 } VegType;
 const char* cellTypeToStr(VegType type);
-inline size_t vegTypeIndex(VegType type) {
+static inline size_t vegTypeIndex(VegType type) {
     switch (type) {
     case VEG_BROADLEAVES:
         return 0;
