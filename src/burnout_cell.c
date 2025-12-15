@@ -1,5 +1,8 @@
 #include "burnout_cell.h"
+#include "cell.h"
 
-void burnoutCells(const CellularAutomaton* automaton) {
+CellularAutomaton burnoutCells(const CellularAutomaton* automaton) {
+    CellularAutomaton result = cloneAutomaton(automaton);
 
+    return result;
 }

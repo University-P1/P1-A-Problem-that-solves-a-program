@@ -41,11 +41,11 @@ inline size_t vegTypeIndex(VegType type) {
 }
 
 typedef enum WindSpeed {
-    WIND_NONE,
-    WIND_SLOW,
-    WIND_MODERATE,
-    WIND_FAST,
-    WIND_EXTREME,
+    WIND_NONE,     // 10 Kmph
+    WIND_SLOW,     // 30 Kmph
+    WIND_MODERATE, // 50 kmph
+    WIND_FAST,     // 70 kmph
+    WIND_EXTREME,  // 90 kmph
 
     WIND_LAST,
 } WindSpeed;
@@ -72,6 +72,7 @@ typedef struct CellularAutomaton {
     /* other stuff maybe */
 } CellularAutomaton;
 void printAutomaton(const CellularAutomaton* automaton, FILE* fd);
+void destroyAutomaton(const CellularAutomaton* automaton);
 
 typedef void (*cellProc)(const CellularAutomaton* automaton, size_t row, size_t col, void* userdata);
 void forEachCell(const CellularAutomaton* automaton, cellProc fn, void* userdata);

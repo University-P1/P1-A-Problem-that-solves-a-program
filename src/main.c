@@ -80,16 +80,24 @@ int main(int argc, char const* const* argv) {
         display(&state, &automaton);
 
         // Spread fire
-        automaton = directSpread(&automaton);
+        CellularAutomaton new = directSpread(&automaton);
+        destroyAutomaton(&automaton);
+        automaton = new;
 
         // Spread fire via spotting
-        spottingSpread(&automaton);
+        new = spottingSpread(&automaton);
+        destroyAutomaton(&automaton);
+        automaton = new;
 
         // Burn cells based on heal / fuel left
-        burnoutCells(&automaton);
+        new = burnoutCells(&automaton);
+        destroyAutomaton(&automaton);
+        automaton = new;
 
         i++;
     }
+
+    destroyAutomaton(&automaton);
 
     SDL_DestroySurface(state.surf);
     SDL_DestroyWindow(state.win);
