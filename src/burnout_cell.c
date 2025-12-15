@@ -2,11 +2,11 @@
 
 static const size_t burn_durations[VEG_LAST] = {
     1, // Broadleaves - 2.55min + 40sec - 1 timestep (rounded down)
-    2, // Shrubs - 2.55min + 45sec - 1 timestep (rounded down)
-    3, // Grassland 2.55min + 15-30sec (averaging to 25sec) - 1 timestep (rounded down)
-    4, // Fireprone (pines) - 2.55min + 167sec - 2 timesteps (rounded down)
-    5, // Agroforestry (trees (spruce) and shrubs) - 2.55min + 65min - 4.053 sec - 26 timesteps (rounded down)
-    6, // Notfireprone (trees (spruce)) 2 timer (twice as much time, so 52 timesteps) (we may have to tweak these numbers)
+    1, // Shrubs - 2.55min + 45sec - 1 timestep (rounded down)
+    1, // Grassland 2.55min + 15-30sec (averaging to 25sec) - 1 timestep (rounded down)
+    2, // Fireprone (pines) - 2.55min + 167sec - 2 timesteps (rounded down)
+    26, // Agroforestry (trees (oak) and shrubs) - 2.55min + 65min - 4.053 sec - 26 timesteps (rounded down)
+    52, // Notfireprone (trees (oak)) 2 timer (twice as much time, so 52 timesteps) (we may have to tweak these numbers)
 };
 
 
