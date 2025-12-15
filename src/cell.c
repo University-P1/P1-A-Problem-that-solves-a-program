@@ -84,9 +84,9 @@ CellularAutomaton cloneAutomaton(const CellularAutomaton* orig) {
     const size_t cell_bytes = num_columns * num_rows * sizeof(Cell);
     CellArray* out_rows = malloc(num_rows * sizeof(CellArray));
     Cell* out_cells = malloc(cell_bytes);
+    memcpy(out_cells, orig->rows[0].elements, cell_bytes);
     for (size_t row = 0; row < num_rows; row++) {
         Cell* row_cells = out_cells + row * num_columns;
-        memcpy(row_cells, orig->rows[row].elements, num_columns * sizeof(Cell));
 
         out_rows[row] = (CellArray) {
             .count = num_columns,
