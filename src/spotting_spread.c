@@ -3,8 +3,12 @@
 #include "cell.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <assert.h>
 
 static bool throwsFirebrand(const CellularAutomaton* automaton, size_t row, size_t col);
+static float ignitionSpotting(float distance, const Cell* dst_cell);
+
 
 /// Modifies the Cellular Automaton by spreading the fire via spotting
 CellularAutomaton spottingSpread(const CellularAutomaton* automaton) {
@@ -22,29 +26,34 @@ CellularAutomaton spottingSpread(const CellularAutomaton* automaton) {
                 continue;
 
             // Try and throw firebrand here:
-            int travel_distance = 0;
+            float temp_distance = 0.0f;
             switch (automaton->speed) {
             case WIND_NONE:
-                travel_distance = 1;
+                temp_distance = 1.0f;
                 break;
             case WIND_SLOW:
-                travel_distance = 4;
+                temp_distance = 4.0f;
                 break;
             case WIND_MODERATE:
-                travel_distance = 7;
+                temp_distance = 7.0f;
                 break;
             case WIND_FAST:
-                travel_distance = 12;
+                temp_distance = 12.0f;
                 break;
             case WIND_EXTREME:
-                travel_distance = 16;
+                temp_distance = 16.0f;
                 break;
             default:
                 assert(false && "Invalid windspeed encountered");
             }
 
-            const int dst_col = (int)col + (travel_distance * automaton->windX);
-            const int dst_row = (int)row + (travel_distance * automaton->windY);
+            // implementer turbulens
+            float sigma = temp_distance * 0.3f;
+            float stochastic_value = ((float)rand() / (float)RAND_MAX) - 0.5f; // -0.5 til 0.5
+            float total_distance = temp_distance + sigma * stochastic_value * 2.0f;
+
+            const int dst_col = (int)col + (total_distance * automaton->windX);
+            const int dst_row = (int)row + (total_distance * automaton->windY);
 
             // outside the simulation space
             if (dst_col < 0 || dst_col >= (int)cell_arr.count)
@@ -55,6 +64,14 @@ CellularAutomaton spottingSpread(const CellularAutomaton* automaton) {
 
             const Cell dst_cell = automaton->rows[dst_row].elements[dst_col];
 
+            // chance to spread to cell (with decay)
+            const float p = ignitionSpotting(total_distance, &dst_cell);
+            // determine if succeeds
+            const float determinator = (float)rand() / (float)RAND_MAX;
+            if (determinator >= p)
+                continue;
+
+            /*
             // Chance to spread to the cell, but via wifi instead of cable
             const float p = chanceToSpread(&cell, &dst_cell, 1.f);
 
@@ -62,6 +79,7 @@ CellularAutomaton spottingSpread(const CellularAutomaton* automaton) {
             const float determinator = (float)rand() / (float)RAND_MAX;
             if (determinator >= p)
                 continue;
+            */
 
             // We are spreading to a cell!
             new_automaton.rows[dst_row].elements[dst_col].state = CELLSTATE_ONFIRE;
@@ -69,6 +87,21 @@ CellularAutomaton spottingSpread(const CellularAutomaton* automaton) {
     }
 
     return new_automaton;
+}
+
+
+// chance to spread to cell with cell decay
+static float ignitionSpotting(float total_distance, const Cell* dst_cell) {
+    const float P0 = 0.5f;
+    const float k  = 0.1f;
+
+    float receptivity = 1.0f - dst_cell->moisture;
+    if (receptivity <= 0.0f)
+        return 0.0f;
+
+    float p = P0 * expf(-k * total_distance) * receptivity;
+
+    return fminf(fmaxf(p, 0.0f), 1.0f);
 }
 
 
