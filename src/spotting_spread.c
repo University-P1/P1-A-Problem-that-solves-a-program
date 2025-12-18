@@ -116,7 +116,7 @@ static bool throwsFirebrand(const CellularAutomaton* automaton, size_t row, size
 
     const float base_prop = .001f;
 
-    const float neighbor_factor = (float)burning_neighbors * 0.1f;
+    const float neighbor_factor = (float)burning_neighbors * 0.2f;
     const float wind_factor = (float)automaton->speed + 1.f;
     const float moisture_factor = 1.f - cell.moisture; // Linear
 
