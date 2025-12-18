@@ -62,6 +62,8 @@ CellularAutomaton spottingSpread(const CellularAutomaton* automaton) {
                 continue;
 
             const Cell dst_cell = automaton->rows[dst_row].elements[dst_col];
+            if (dst_cell.state != CELLSTATE_NORMAL)
+                continue;
 
             // chance to spread to cell (with decay)
             const float p = ignitionSpotting(total_distance, &dst_cell);
