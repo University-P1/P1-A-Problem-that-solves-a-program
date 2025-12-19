@@ -1,12 +1,12 @@
 #include "burnout_cell.h"
 
 static const size_t burn_durations[VEG_LAST] = {
-    1,
-    1,
-    1,
-    2,
-    13,
-    49,
+    1,  // Broadleaves
+    1,  // Shrubs
+    1,  // Grassland
+    2,  // Fireprone
+    13, // Agroforestry
+    49, // Not fireprone
 };
 
 // The function that checks if a cell is burned out
