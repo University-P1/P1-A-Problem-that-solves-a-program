@@ -1,15 +1,12 @@
 #include "burnout_cell.h"
 
-// We calculated that the timestep is roughly 2m 55s
-// 1t = 2m + 55s
-
 static const size_t burn_durations[VEG_LAST] = {
-    1, // Broadleaves - 1t + 40s = 1 timestep (rounded down)
-    1, // Shrubs 1t + 45sec = 1 timestep (rounded down)
-    1, // Grassland 1t + 15-30sec (averaging to 25sec) = 1 timestep (rounded down)
-    2, // Fireprone (pines) 1t + 167s = 2 timesteps (rounded down)
-    11, // Agroforestry (trees and shrubs) 1t + not fireprone * 1/4 + shrubs * 3/4 = 10.5 + 1 = 11 timesteps (rounded down)
-    42, // Not fireprone (trees (oak)) 1t + 2h = 42t (rounded down)
+    1,
+    1,
+    1,
+    2,
+    13,
+    49,
 };
 
 // The function that checks if a cell is burned out
