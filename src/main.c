@@ -47,7 +47,7 @@ int main(int argc, char const* const* argv) {
     int step;
 
     fprintf(stderr, "How many times do you wish for the simulation to run?");
-    if (scanf("%d" ,&step) < 0) {
+    if (scanf("%d", &step) != 1) { // fixed '< 0' to '!= 1'
         fputs("We failed reading... whut.. :(\n", stderr);
         return EXIT_FAILURE;
     }
