@@ -11,7 +11,6 @@ void spreadToNeighbors(const CellularAutomaton* automaton, CellularAutomaton* ou
 float chanceToSpread(const Cell* src, const Cell* dst, float a_w);
 
 float wind_effect_table[WIND_LAST][5] = {
-    // Chatgpt read the graph, check if they are correct.
     // Wind factor, effect of wind and direction between the neighboring cell and the burning cell.
     //   0°     45°    90°    135°   180°
     {1.20f, 1.05f, 1.00f, 1.00f, 1.00f}, // 10 km/h
