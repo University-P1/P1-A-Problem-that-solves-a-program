@@ -62,7 +62,7 @@ CellularAutomaton spottingSpread(const CellularAutomaton* automaton) {
                 continue;
 
             const Cell dst_cell = automaton->rows[dst_row].elements[dst_col];
-            if (dst_cell.state != CELLSTATE_NORMAL)
+            if (dst_cell.state != CELLSTATE_NORMAL) // NOTE: Added after submitting repport
                 continue;
 
             // chance to spread to cell (with decay)
